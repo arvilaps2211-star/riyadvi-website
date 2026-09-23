@@ -1,4 +1,5 @@
 import { services } from "@/data/services";
+import { serviceIcons } from "@/lib/service-icons";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -27,7 +28,7 @@ export function ServicesPreview() {
 
         <ul className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {services.map((service) => {
-            const Icon = service.icon;
+            const Icon = serviceIcons[service.iconId];
             return (
               <li key={service.slug}>
                 <article className="group flex h-full flex-col border border-border bg-surface p-6 transition-colors duration-200 hover:border-border-gold">

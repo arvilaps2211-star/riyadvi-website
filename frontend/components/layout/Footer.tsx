@@ -2,12 +2,12 @@ import { Container } from "@/components/ui/Container";
 import Link from "next/link";
 
 const serviceLinks = [
-  { href: "/services#web-development", label: "Web Development" },
-  { href: "/services#app-development", label: "App Development" },
-  { href: "/services#digital-marketing", label: "Digital Marketing" },
-  { href: "/services#ar-vr", label: "AR / VR" },
-  { href: "/services#3d-modeling", label: "3D Modeling" },
-  { href: "/services#ui-ux-design", label: "UI/UX Design" },
+  { href: "/services/web-development", label: "Web Development" },
+  { href: "/services/app-development", label: "App Development" },
+  { href: "/services/digital-marketing", label: "Digital Marketing" },
+  { href: "/services/ar-vr", label: "AR / VR" },
+  { href: "/services/3d-modeling", label: "3D Modeling" },
+  { href: "/services/ui-ux-design", label: "UI/UX Design" },
 ] as const;
 
 const companyLinks = [
@@ -20,11 +20,11 @@ const resourceLinks = [
   { href: "/portfolio", label: "Portfolio" },
   { href: "/blog", label: "Blog" },
   {
-    href: "/resources/business-health-checkup",
+    href: "/business-health-checkup",
     label: "Business Health Checkup",
   },
   {
-    href: "/resources/software-project-planning-guide",
+    href: "/software-project-planning-guide",
     label: "Software Project Planning Guide",
   },
 ] as const;

@@ -1,4 +1,4 @@
-import { HeroScenePlaceholder } from "@/components/3d/HeroScenePlaceholder";
+import { HeroSceneLazy } from "@/components/3d/lazy-scenes";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 
@@ -51,7 +51,7 @@ export function Hero() {
             <HeroContent />
             <HeroActions />
           </div>
-          <HeroScenePlaceholder />
+          <HeroSceneLazy />
         </div>
       </Container>
     </section>
