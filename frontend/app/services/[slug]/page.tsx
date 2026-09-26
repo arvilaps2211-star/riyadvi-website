@@ -1,6 +1,8 @@
 import { portfolioProjects } from "@/data/portfolio";
 import { getService, services } from "@/data/services";
 import { serviceIcons } from "@/lib/service-icons";
+import { ProcessTimeline } from "@/components/services/ProcessTimeline";
+import { ServiceHeroVisual } from "@/components/services/ServiceHeroVisual";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { PageCta } from "@/components/ui/PageCta";
@@ -42,13 +44,13 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
   return (
     <>
       <PageHero
-        eyebrow="Service"
+        eyebrow={service.heroLabel}
         title={service.title}
         description={service.description}
         actions={
           <>
             <Button href="/contact" variant="primary">
-              Get a Quote
+              {service.cta.label}
             </Button>
             <Button href="/services" variant="outline">
               All Services
@@ -59,21 +61,24 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
       <section className="border-b border-border bg-surface py-14 sm:py-16">
         <Container>
-          <div className="mb-10 flex h-12 w-12 items-center justify-center border border-border-gold/50 text-gold">
-            <Icon className="h-6 w-6" aria-hidden />
-          </div>
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div className="border border-border bg-[#0a0a0a] p-6 sm:p-8">
-              <h2 className="text-xl font-semibold text-white">Problem</h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
-                {service.problem}
-              </p>
-            </div>
-            <div className="border border-border bg-[#0a0a0a] p-6 sm:p-8">
-              <h2 className="text-xl font-semibold text-white">Solution</h2>
-              <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
-                {service.solution}
-              </p>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
+            <ServiceHeroVisual variant={service.iconId} />
+            <div className="flex flex-col gap-8">
+              <div className="flex h-12 w-12 items-center justify-center border border-border-gold/50 text-gold">
+                <Icon className="h-6 w-6" aria-hidden />
+              </div>
+              <div className="border border-border bg-[#0a0a0a] p-6 sm:p-8">
+                <h2 className="text-xl font-semibold text-white">Problem</h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
+                  {service.problem}
+                </p>
+              </div>
+              <div className="border border-border bg-[#0a0a0a] p-6 sm:p-8">
+                <h2 className="text-xl font-semibold text-white">Solution</h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
+                  {service.solution}
+                </p>
+              </div>
             </div>
           </div>
         </Container>
@@ -130,19 +135,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       <section className="border-b border-border bg-surface py-14 sm:py-16">
         <Container>
           <h2 className="text-2xl font-semibold text-white">Process</h2>
-          <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {service.process.map((step, index) => (
-              <li
-                key={step}
-                className="border border-border bg-[#0a0a0a] p-5"
-              >
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gold">
-                  Step {String(index + 1).padStart(2, "0")}
-                </span>
-                <p className="mt-3 text-sm font-medium text-white">{step}</p>
-              </li>
-            ))}
-          </ol>
+          <ProcessTimeline steps={service.process} className="mt-8" />
         </Container>
       </section>
 
@@ -180,9 +173,9 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       ) : null}
 
       <PageCta
-        title={`Let's discuss your ${service.title.toLowerCase()} project.`}
-        description="Share your goals and we'll outline a practical approach."
-        label="Get a Quote"
+        title={service.cta.title}
+        description={service.cta.description}
+        label={service.cta.label}
       />
     </>
   );

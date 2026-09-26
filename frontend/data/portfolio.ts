@@ -2,6 +2,7 @@ import type { PortfolioProject } from "@/types/portfolio";
 
 export const portfolioProjects: PortfolioProject[] = [
   {
+    id: "port-puratap",
     slug: "puratap",
     name: "Puratap",
     client: "Puratap",
@@ -19,9 +20,11 @@ export const portfolioProjects: PortfolioProject[] = [
       "Foundation for ongoing content and SEO improvements",
     ],
     relatedServiceSlugs: ["web-development", "ui-ux-design", "digital-marketing"],
+    visualType: "product",
     featuredOnHomepage: true,
   },
   {
+    id: "port-wanaromah-perfumers",
     slug: "wanaromah-perfumers",
     name: "Wanaromah Perfumers",
     client: "Wanaromah Perfumers",
@@ -39,9 +42,11 @@ export const portfolioProjects: PortfolioProject[] = [
       "Premium visual system aligned with fragrance positioning",
     ],
     relatedServiceSlugs: ["web-development", "ui-ux-design", "3d-modeling"],
+    visualType: "product",
     featuredOnHomepage: true,
   },
   {
+    id: "port-laxmi-astro-ai",
     slug: "laxmi-astro-ai",
     name: "Laxmi Astro AI",
     client: "Laxmi Astro AI",
@@ -59,9 +64,12 @@ export const portfolioProjects: PortfolioProject[] = [
       "Product foundation ready for iteration",
     ],
     relatedServiceSlugs: ["app-development", "ui-ux-design", "web-development"],
+    visualType: "ai-data",
+    interactive: true,
     featuredOnHomepage: true,
   },
   {
+    id: "port-tony-guy",
     slug: "tony-guy",
     name: "Tony & Guy",
     client: "Tony & Guy",
@@ -79,8 +87,10 @@ export const portfolioProjects: PortfolioProject[] = [
       "Content structure suited to salon marketing",
     ],
     relatedServiceSlugs: ["web-development", "digital-marketing", "ui-ux-design"],
+    visualType: "interface",
   },
   {
+    id: "port-studio11",
     slug: "studio11",
     name: "Studio11",
     client: "Studio11",
@@ -98,8 +108,10 @@ export const portfolioProjects: PortfolioProject[] = [
       "Cleaner path from inspiration to inquiry",
     ],
     relatedServiceSlugs: ["web-development", "ui-ux-design", "3d-modeling"],
+    visualType: "3d",
   },
   {
+    id: "port-sivam-physio-care",
     slug: "sivam-physio-care",
     name: "Sivam Physio Care",
     client: "Sivam Physio Care",
@@ -117,8 +129,10 @@ export const portfolioProjects: PortfolioProject[] = [
       "Simplified contact and appointment inquiry flow",
     ],
     relatedServiceSlugs: ["web-development", "ui-ux-design"],
+    visualType: "healthcare",
   },
   {
+    id: "port-pearl-housing",
     slug: "pearl-housing",
     name: "Pearl Housing",
     client: "Pearl Housing",
@@ -136,8 +150,10 @@ export const portfolioProjects: PortfolioProject[] = [
       "Improved inquiry pathways for prospective buyers",
     ],
     relatedServiceSlugs: ["web-development", "ui-ux-design", "digital-marketing"],
+    visualType: "architecture",
   },
   {
+    id: "port-nugenica-biotech-lab",
     slug: "nugenica-biotech-lab",
     name: "Nugenica Biotech Lab",
     client: "Nugenica Biotech Lab",
@@ -155,8 +171,10 @@ export const portfolioProjects: PortfolioProject[] = [
       "Credible visual and content system",
     ],
     relatedServiceSlugs: ["web-development", "ui-ux-design"],
+    visualType: "dashboard",
   },
   {
+    id: "port-visdoc",
     slug: "visdoc",
     name: "VisDoc",
     client: "VisDoc",
@@ -174,8 +192,10 @@ export const portfolioProjects: PortfolioProject[] = [
       "Design patterns that support future product pages",
     ],
     relatedServiceSlugs: ["ui-ux-design", "web-development", "app-development"],
+    visualType: "mobile",
   },
   {
+    id: "port-cube-dental",
     slug: "cube-dental",
     name: "Cube Dental",
     client: "Cube Dental",
@@ -193,6 +213,7 @@ export const portfolioProjects: PortfolioProject[] = [
       "Simpler path toward appointment engagement",
     ],
     relatedServiceSlugs: ["web-development", "ui-ux-design", "digital-marketing"],
+    visualType: "healthcare",
   },
 ];
 

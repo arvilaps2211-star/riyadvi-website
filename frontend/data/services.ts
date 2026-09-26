@@ -2,8 +2,10 @@ import type { Service } from "@/types/service";
 
 export const services: Service[] = [
   {
+    id: "svc-web-development",
     slug: "web-development",
     title: "Web Development",
+    heroLabel: "Websites & Web Platforms",
     shortDescription:
       "High-performance websites and web platforms built for reliability, speed, and scale.",
     description:
@@ -47,10 +49,18 @@ export const services: Service[] = [
       "Iteration & growth",
     ],
     relatedPortfolioSlugs: ["puratap", "pearl-housing", "studio11"],
+    cta: {
+      label: "Get a Quote",
+      title: "Let's build your next web platform.",
+      description:
+        "Share your goals and constraints and we'll outline a practical approach for your website or web application.",
+    },
   },
   {
+    id: "svc-app-development",
     slug: "app-development",
     title: "App Development",
+    heroLabel: "Mobile & Cross-Platform Apps",
     shortDescription:
       "Mobile and cross-platform applications designed for intuitive user experiences.",
     description:
@@ -92,10 +102,18 @@ export const services: Service[] = [
       "Release & support",
     ],
     relatedPortfolioSlugs: ["laxmi-astro-ai", "visdoc", "cube-dental"],
+    cta: {
+      label: "Discuss Your Project",
+      title: "Have an app idea worth building?",
+      description:
+        "Tell us about your product goals and we'll help you scope a realistic path from concept to release.",
+    },
   },
   {
+    id: "svc-digital-marketing",
     slug: "digital-marketing",
     title: "Digital Marketing",
+    heroLabel: "Marketing & Growth",
     shortDescription:
       "Digital strategies that connect your brand with the right audience across channels.",
     description:
@@ -137,10 +155,18 @@ export const services: Service[] = [
       "Optimization recommendations",
     ],
     relatedPortfolioSlugs: ["wanaromah-perfumers", "tony-guy", "puratap"],
+    cta: {
+      label: "Book a Free Consultation",
+      title: "Ready to sharpen your digital presence?",
+      description:
+        "Let's review your channels and messaging, then map out a focused, measurable next step.",
+    },
   },
   {
+    id: "svc-ar-vr",
     slug: "ar-vr",
     title: "AR / VR",
+    heroLabel: "Immersive AR/VR Experiences",
     shortDescription:
       "Immersive augmented and virtual experiences for product storytelling and engagement.",
     description:
@@ -182,10 +208,18 @@ export const services: Service[] = [
       "Deployment & iteration",
     ],
     relatedPortfolioSlugs: ["studio11", "pearl-housing", "nugenica-biotech-lab"],
+    cta: {
+      label: "Discuss Your Project",
+      title: "Have a product or space to bring to life?",
+      description:
+        "Tell us about the experience you're imagining and we'll outline a practical, device-tested approach.",
+    },
   },
   {
+    id: "svc-3d-modeling",
     slug: "3d-modeling",
     title: "3D Modeling",
+    heroLabel: "3D Assets & Visualization",
     shortDescription:
       "Detailed 3D assets and visualizations for products, environments, and digital experiences.",
     description:
@@ -227,10 +261,18 @@ export const services: Service[] = [
       "Delivery & integration support",
     ],
     relatedPortfolioSlugs: ["wanaromah-perfumers", "studio11", "cube-dental"],
+    cta: {
+      label: "Get a Quote",
+      title: "Need production-ready 3D assets?",
+      description:
+        "Share your reference material and target platform and we'll scope an optimized modeling pipeline.",
+    },
   },
   {
+    id: "svc-ui-ux-design",
     slug: "ui-ux-design",
     title: "UI/UX Design",
+    heroLabel: "Interfaces & Design Systems",
     shortDescription:
       "Research-led interfaces that balance clarity, aesthetics, and business outcomes.",
     description:
@@ -272,6 +314,12 @@ export const services: Service[] = [
       "Developer collaboration",
     ],
     relatedPortfolioSlugs: ["visdoc", "laxmi-astro-ai", "sivam-physio-care"],
+    cta: {
+      label: "Book a Free Consultation",
+      title: "Ready for an interface that works as well as it looks?",
+      description:
+        "Walk us through your product and users, and we'll outline a research-led design approach.",
+    },
   },
 ];
 

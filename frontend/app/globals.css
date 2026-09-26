@@ -121,3 +121,87 @@ main {
     animation: none;
   }
 }
+
+/* Service hero visuals — lightweight CSS/SVG animation, no WebGL. */
+
+@keyframes service-visual-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes service-visual-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes service-visual-sweep {
+  0% {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(46px);
+    opacity: 0;
+  }
+}
+
+@keyframes service-visual-rise {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.18);
+  }
+}
+
+.service-visual-spin {
+  animation: service-visual-spin 22s linear infinite;
+  transform-origin: center;
+}
+
+.service-visual-spin-slow {
+  animation: service-visual-spin 40s linear infinite;
+  transform-origin: center;
+}
+
+.service-visual-pulse {
+  animation: service-visual-pulse 2.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.service-visual-sweep {
+  animation: service-visual-sweep 3.2s ease-in-out infinite;
+}
+
+.service-visual-rise {
+  animation: service-visual-rise 2.4s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-visual-spin,
+  .service-visual-spin-slow,
+  .service-visual-pulse,
+  .service-visual-sweep,
+  .service-visual-rise {
+    animation: none;
+  }
+}

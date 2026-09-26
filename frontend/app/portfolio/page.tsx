@@ -1,8 +1,10 @@
-import { portfolioProjects } from "@/data/portfolio";
+import { featuredPortfolioProjects, portfolioProjects } from "@/data/portfolio";
+import { PortfolioVisual } from "@/components/portfolio/PortfolioVisual";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { PageCta } from "@/components/ui/PageCta";
 import { PageHero } from "@/components/ui/PageHero";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -26,19 +28,55 @@ export default function PortfolioPage() {
         }
       />
 
+      {featuredPortfolioProjects.length > 0 ? (
+        <section
+          aria-labelledby="portfolio-featured-heading"
+          className="border-b border-border bg-surface py-14 sm:py-16 lg:py-20"
+        >
+          <Container>
+            <SectionHeading
+              eyebrow="Featured Work"
+              title="Selected Highlights"
+              description="A closer look at a few projects that reflect the range of work below."
+              alignment="center"
+              className="max-w-3xl"
+              titleId="portfolio-featured-heading"
+            />
+            <ul className="mt-10 grid gap-6 lg:grid-cols-3">
+              {featuredPortfolioProjects.map((project) => (
+                <li key={project.slug}>
+                  <Link
+                    href={`/portfolio/${project.slug}`}
+                    className="group flex h-full flex-col border border-border-gold/40 bg-[#0a0a0a] p-5 transition-colors hover:border-border-gold focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                  >
+                    <PortfolioVisual variant={project.visualType} />
+                    <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-gold">
+                      {project.industry}
+                    </p>
+                    <h3 className="mt-2 text-lg font-semibold text-white">
+                      {project.name}
+                    </h3>
+                    <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
+                      {project.shortDescription}
+                    </p>
+                    <span className="mt-4 inline-flex text-sm font-semibold text-gold">
+                      View Case Study →
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+      ) : null}
+
       <section className="bg-background py-14 sm:py-16 lg:py-20">
         <Container>
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {portfolioProjects.map((project) => (
               <li key={project.slug}>
                 <article className="group flex h-full flex-col border border-border bg-surface p-6 transition-colors hover:border-border-gold">
-                  <div className="aspect-[16/10] border border-border bg-[linear-gradient(135deg,rgba(212,175,55,0.08),transparent_55%)]">
-                    <div className="flex h-full items-end p-4">
-                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-gold">
-                        {project.industry}
-                      </span>
-                    </div>
-                  </div>
+                  <PortfolioVisual variant={project.visualType} />
                   <h2 className="mt-5 text-xl font-semibold text-white">
                     {project.name}
                   </h2>

@@ -1,11 +1,23 @@
 import { services } from "@/data/services";
 import { serviceIcons } from "@/lib/service-icons";
+import { ECOSYSTEM_TECH } from "@/components/3d/scene-config";
+import { ProcessTimeline } from "@/components/services/ProcessTimeline";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { PageCta } from "@/components/ui/PageCta";
 import { PageHero } from "@/components/ui/PageHero";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { Metadata } from "next";
 import Link from "next/link";
+
+const APPROACH_STEPS = [
+  "Strategy",
+  "Design",
+  "Development",
+  "Marketing",
+  "Optimization",
+  "Growth",
+];
 
 export const metadata: Metadata = {
   title: "Services",
@@ -58,6 +70,49 @@ export default function ServicesPage() {
               );
             })}
           </ul>
+        </Container>
+      </section>
+
+      <section
+        aria-labelledby="services-technology-heading"
+        className="border-b border-border bg-surface py-14 sm:py-16 lg:py-20"
+      >
+        <Container>
+          <SectionHeading
+            eyebrow="Technology"
+            title="A Modern, Proven Stack"
+            description="The same technology ecosystem powering our homepage experience underpins every service below."
+            alignment="center"
+            className="max-w-3xl"
+            titleId="services-technology-heading"
+          />
+          <ul className="mt-10 flex flex-wrap justify-center gap-3">
+            {ECOSYSTEM_TECH.map((tech) => (
+              <li
+                key={tech}
+                className="border border-border-gold/40 bg-[#0a0a0a] px-4 py-2 text-xs font-medium tracking-wide text-gold sm:text-sm"
+              >
+                {tech}
+              </li>
+            ))}
+          </ul>
+        </Container>
+      </section>
+
+      <section
+        aria-labelledby="services-approach-heading"
+        className="border-b border-border bg-background py-14 sm:py-16 lg:py-20"
+      >
+        <Container>
+          <SectionHeading
+            eyebrow="Our Approach"
+            title="From Strategy to Sustained Growth"
+            description="Every engagement follows the same disciplined progression, adapted to the service and scope of your project."
+            alignment="center"
+            className="max-w-3xl"
+            titleId="services-approach-heading"
+          />
+          <ProcessTimeline steps={APPROACH_STEPS} className="mt-10" />
         </Container>
       </section>
 
