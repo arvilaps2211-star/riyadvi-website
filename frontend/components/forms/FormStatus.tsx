@@ -4,19 +4,27 @@ import type { SubmissionStatus } from "@/types/forms";
 
 type FormStatusProps = {
   status: SubmissionStatus;
-  /** Shown in the "ready" state as a short summary of what happens next. */
+  /**
+   * Shown in the "ready" state. Stage 8: this should be the real message
+   * returned by the backend after a successful submission, not a
+   * hardcoded string — the UI never claims success on its own authority.
+   */
   readyDetail?: string;
-  /** Shown in the "error" state; defaults to a generic validation message. */
+  /**
+   * Shown in the "error" state. Stage 8: prefer the real message returned
+   * by the backend when available; falls back to a generic message for
+   * client-side-only validation failures.
+   */
   errorDetail?: string;
   className?: string;
 };
 
 /**
- * Honest, non-fabricated status feedback.
+ * Honest, server-driven status feedback.
  *
- * IMPORTANT (Stage 7 spec, Step 18): there is no backend yet. This
- * component must never claim a submission was received or saved — only
- * that the data is valid and staged for Stage 8's API integration.
+ * Stage 8: the backend is real. This component only ever displays a
+ * "ready" (success) state when the caller has an actual server response
+ * confirming it — it never fabricates success on its own.
  */
 export function FormStatus({
   status,
@@ -37,7 +45,7 @@ export function FormStatus({
           aria-hidden="true"
           className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-border-gold border-t-gold"
         />
-        Preparing your submission…
+        Submitting…
       </div>
     );
   }
@@ -50,11 +58,7 @@ export function FormStatus({
         className={`border border-border-gold/50 bg-gold/5 px-4 py-4 ${className}`}
       >
         <p className="text-sm font-semibold text-gold">
-          Your information is valid and ready for submission.
-        </p>
-        <p className="mt-1.5 text-sm leading-relaxed text-muted">
-          {readyDetail ??
-            "Backend delivery will be connected in Stage 8. Nothing has been sent to a server yet."}
+          {readyDetail ?? "Thank you — your submission was received."}
         </p>
       </div>
     );

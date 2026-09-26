@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/forms/FormField";
 import { FormStatus } from "@/components/forms/FormStatus";
@@ -20,6 +21,7 @@ export function LeadMagnetForm() {
   const [values, setValues] = useState<LeadMagnetPayload>(LEAD_MAGNET_DEFAULTS);
   const [errors, setErrors] = useState<LeadMagnetErrors>({});
   const [status, setStatus] = useState<SubmissionStatus>("idle");
+  const [serverMessage, setServerMessage] = useState<string | undefined>();
 
   function setField<K extends keyof LeadMagnetPayload>(key: K, value: LeadMagnetPayload[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -34,7 +36,7 @@ export function LeadMagnetForm() {
     };
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (status === "submitting") return;
 
@@ -42,24 +44,35 @@ export function LeadMagnetForm() {
     setErrors(nextErrors);
 
     if (hasErrors(nextErrors)) {
+      setServerMessage(undefined);
       setStatus("error");
       return;
     }
 
     setStatus("submitting");
 
-    // Ready for Stage 8: POST /api/lead-magnet — not called yet.
     const payload: LeadMagnetPayload = { ...values };
-    if (process.env.NODE_ENV !== "production") {
-      console.info("[lead-magnet] ready for Stage 8 POST /api/lead-magnet", payload);
+    const result = await api.leadMagnet(payload);
+
+    if (result.success) {
+      // Honest per spec Step 22: only the server's own wording is shown —
+      // it explicitly does not claim a file was delivered when none exists.
+      setServerMessage(result.message);
+      setStatus("ready");
+      return;
     }
 
-    window.setTimeout(() => setStatus("ready"), 500);
+    if (result.errors) {
+      setErrors((prev) => ({ ...prev, ...result.errors }));
+    }
+    setServerMessage(result.message);
+    setStatus("error");
   }
 
   function handleReset() {
     setValues(LEAD_MAGNET_DEFAULTS);
     setErrors({});
+    setServerMessage(undefined);
     setStatus("idle");
   }
 
@@ -130,15 +143,12 @@ export function LeadMagnetForm() {
       </fieldset>
 
       <div id={`${formId}-status`} className="mt-6">
-        <FormStatus
-          status={status}
-          readyDetail="Gated delivery of the guide will be connected in Stage 8. No file is available to download yet, so nothing has been sent."
-        />
+        <FormStatus status={status} readyDetail={serverMessage} errorDetail={serverMessage} />
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button type="submit" variant="primary" disabled={isSubmitting || isReady} className="w-full sm:w-auto">
-          {isSubmitting ? "Preparing…" : "Request Access"}
+          {isSubmitting ? "Submitting…" : "Request Access"}
         </Button>
         {isReady ? (
           <Button type="button" variant="outline" onClick={handleReset}>

@@ -2,6 +2,7 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { services } from "@/data/services";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/forms/FormField";
 import { FormStatus } from "@/components/forms/FormStatus";
@@ -34,6 +35,7 @@ export function ContactForm() {
   const [values, setValues] = useState<ContactPayload>(CONTACT_PAYLOAD_DEFAULTS);
   const [errors, setErrors] = useState<ContactErrors>({});
   const [status, setStatus] = useState<SubmissionStatus>("idle");
+  const [serverMessage, setServerMessage] = useState<string | undefined>();
 
   function setField<K extends keyof ContactPayload>(key: K, value: ContactPayload[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -53,7 +55,7 @@ export function ContactForm() {
     return next;
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (status === "submitting") return; // prevent duplicate submission
 
@@ -61,26 +63,35 @@ export function ContactForm() {
     setErrors(nextErrors);
 
     if (hasErrors(nextErrors)) {
+      setServerMessage(undefined);
       setStatus("error");
       return;
     }
 
     setStatus("submitting");
 
-    // Payload is fully assembled and typed for Stage 8:
-    // POST /api/contact — not called yet, per Stage 7 scope.
     const payload: ContactPayload = { ...values };
-    if (process.env.NODE_ENV !== "production") {
-      console.info("[contact] ready for Stage 8 POST /api/contact", payload);
+    const result = await api.contact(payload);
+
+    if (result.success) {
+      setServerMessage(result.message);
+      setStatus("ready");
+      return;
     }
 
-    // Simulated local delay only — no network request is made.
-    window.setTimeout(() => setStatus("ready"), 500);
+    // Server-side validation caught something the client missed — surface
+    // it against the relevant fields, same as a client-side error would be.
+    if (result.errors) {
+      setErrors((prev) => ({ ...prev, ...result.errors }));
+    }
+    setServerMessage(result.message);
+    setStatus("error");
   }
 
   function handleReset() {
     setValues(CONTACT_PAYLOAD_DEFAULTS);
     setErrors({});
+    setServerMessage(undefined);
     setStatus("idle");
   }
 
@@ -207,12 +218,12 @@ export function ContactForm() {
       </fieldset>
 
       <div id={`${formId}-status`} className="mt-6">
-        <FormStatus status={status} />
+        <FormStatus status={status} readyDetail={serverMessage} errorDetail={serverMessage} />
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button type="submit" variant="primary" disabled={isSubmitting || isReady}>
-          {isSubmitting ? "Preparing…" : "Send Enquiry"}
+          {isSubmitting ? "Submitting…" : "Send Enquiry"}
         </Button>
         {isReady ? (
           <Button type="button" variant="outline" onClick={handleReset}>

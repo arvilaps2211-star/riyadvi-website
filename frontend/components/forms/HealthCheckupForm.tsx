@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { CheckboxField } from "@/components/forms/CheckboxField";
 import { FormField } from "@/components/forms/FormField";
@@ -97,6 +98,7 @@ export function HealthCheckupForm() {
   const [values, setValues] = useState<HealthCheckupPayload>(HEALTH_CHECKUP_DEFAULTS);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<SubmissionStatus>("idle");
+  const [serverMessage, setServerMessage] = useState<string | undefined>();
 
   const isSubmitting = status === "submitting";
   const isReady = status === "ready";
@@ -203,31 +205,40 @@ export function HealthCheckupForm() {
     setStep((prev) => Math.max(prev - 1, 1));
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isLocked) return;
 
     const stepErrors = validateStep(6);
     setErrors((prev) => ({ ...prev, ...stepErrors }));
     if (hasErrors(stepErrors)) {
+      setServerMessage(undefined);
       setStatus("error");
       return;
     }
 
     setStatus("submitting");
 
-    // Ready for Stage 8: POST /api/health-checkup — not called yet.
     const payload: HealthCheckupPayload = { ...values };
-    if (process.env.NODE_ENV !== "production") {
-      console.info("[health-checkup] ready for Stage 8 POST /api/health-checkup", payload);
+    const result = await api.healthCheckup(payload);
+
+    if (result.success) {
+      setServerMessage(result.message);
+      setStatus("ready");
+      return;
     }
 
-    window.setTimeout(() => setStatus("ready"), 600);
+    if (result.errors) {
+      setErrors((prev) => ({ ...prev, ...result.errors }));
+    }
+    setServerMessage(result.message);
+    setStatus("error");
   }
 
   function handleReset() {
     setValues(HEALTH_CHECKUP_DEFAULTS);
     setErrors({});
+    setServerMessage(undefined);
     setStatus("idle");
     setStep(1);
   }
@@ -460,7 +471,7 @@ export function HealthCheckupForm() {
       </fieldset>
 
       <div id={`${formId}-status`} className="mt-6">
-        <FormStatus status={status} />
+        <FormStatus status={status} readyDetail={serverMessage} errorDetail={serverMessage} />
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
@@ -479,7 +490,7 @@ export function HealthCheckupForm() {
           ) : null}
           {step === TOTAL_STEPS ? (
             <Button type="submit" variant="primary" disabled={isLocked}>
-              {isSubmitting ? "Preparing…" : "Finish"}
+              {isSubmitting ? "Submitting…" : "Finish"}
             </Button>
           ) : null}
           {isReady ? (

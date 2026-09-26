@@ -1285,12 +1285,181 @@ state.
 
 ---
 
-# 36. MASTER RULE (REAFFIRMED)
+# 37. STAGE 8 — COMPLETION RECORD (Backend + PostgreSQL + Real Lead Submission)
 
-**Preserve what works. Improve what is weak. Build what is missing.**
+**Status: COMPLETE AND VERIFIED.**
 
-This held for Stage 5, Stage 6, and Stage 7: in each case the existing
-architecture was inspected first, found substantially complete, and
-extended rather than replaced. Always inspect first. Always validate
-after changes. Always report actual results. Do not fabricate
-completion.
+**Important transparency note before anything else:** at the start of this
+stage, `backend/src/{config,middleware,models,services,validators}` and
+`backend/database/schema.sql` were found already populated with content —
+plus a PostgreSQL database, role, and schema already provisioned — none of
+which existed in the original project upload (confirmed by diffing
+against the pristine first extraction, which had only 7 *empty* scaffold
+directories and no `validators/` directory at all) and none of which any
+prior-stage work in this history created. The content referenced this
+project's own Stage 7 TypeScript type names with a precision a genuinely
+independent pre-existing file could not have had. Every line of it was
+read before use: it was **not malicious** (parameterized SQL throughout,
+no hardcoded secrets, no exfiltration), but it was **not functional
+either** — `tsconfig.json` used `module: nodenext` while `package.json`
+declared `"type": "commonjs"` (mutually incompatible), dependency versions
+were fabricated and don't exist on the npm registry (`typescript ^7`,
+`dotenv ^18`, `@types/node ^26`), a required dependency
+(`express-rate-limit`) was imported but never listed, and there was no
+`server.ts` or `routes/` implementation at all. The pre-existing database
+and role were discarded and recreated from scratch under this session's
+own control before any schema was trusted or applied. This is documented
+here rather than silently absorbed into "existing architecture, reused as
+found," because that framing would have been inaccurate.
+
+**Backend changes:**
+- Fixed `tsconfig.json` (standard CommonJS config: `module: commonjs`,
+  `moduleResolution: node`, `outDir: dist`, `rootDir: src`).
+- Rewrote `package.json`: real, resolvable dependency versions; added
+  `express-rate-limit`; added `dev`/`build`/`start`/`typecheck`/`lint`
+  scripts (none existed before — `lint` aliases `tsc --noEmit` since no
+  ESLint config exists for the backend and adding one wasn't requested).
+- Removed a stray `src/{config,middleware,models,routes,services,validators,utils}`
+  directory (a literal failed shell brace-expansion artifact) and an
+  unused empty `src/controllers/`.
+- Created `src/server.ts` (Express app, restricted CORS, JSON body
+  parsing with a 100kb limit, request logging that never logs bodies,
+  route mounting, centralized error handling).
+- Created `src/routes/{contact,consultation,healthCheckup,leadMagnet,applications,health}.ts`.
+- Added `backend/.gitignore` (none existed) and `backend/.env.example`.
+- Kept and built on the audited `config/database.ts`, `middleware/*`,
+  `models/*`, `services/leadService.ts`, `validators/leadValidators.ts`,
+  `utils/response.ts`, and `database/schema.sql` — all read line-by-line
+  first, all genuinely sound once the surrounding project (tsconfig,
+  package.json, missing routes/server) was fixed.
+
+**PostgreSQL:** local PostgreSQL 16, fresh `riyadvi_dev` database, `riyadvi_app`
+role with a locally-generated password (never hardcoded, only in the
+git-ignored `.env`). `database/schema.sql` applied cleanly against the
+fresh database (`pgcrypto` extension for `gen_random_uuid()`, 5 tables,
+appropriate indexes).
+
+**Database tables:** `contact_leads`, `consultation_requests`,
+`health_checkups` (JSONB for `digital_presence`, `technology_readiness`,
+`goals`, and the `growth_priorities` array), `lead_magnet_leads`,
+`applications`. All use a `UUID` primary key (`gen_random_uuid()`) and
+`created_at`/`updated_at` timestamps.
+
+**API endpoints:** `GET /api/health`, `POST /api/contact`,
+`POST /api/consultation`, `POST /api/health-checkup`,
+`POST /api/lead-magnet`, `POST /api/applications`. Consistent JSON
+response shape (`success`/`message`/`data` or `errors`) across all of
+them, matching the spec's Step 14 exactly.
+
+**Server-side validation:** Zod schemas per endpoint
+(`validators/leadValidators.ts`) — required/optional fields, length
+bounds, email format, enum membership (e.g. `businessStage`, `projectType`
+against the real service list), array minimums. Client-side validation in
+Stage 7's forms is unchanged and still runs first for fast feedback, but
+the server never trusts it.
+
+**Error handling:** centralized `errorHandler`/`notFound` middleware —
+400 (validation), 404 (unknown route), 500 (unexpected) all return the
+same safe JSON shape; SQL errors, stack traces, and connection strings
+never reach the client. Verified live by stopping PostgreSQL mid-session:
+`/api/health` accurately reported `"database": "unavailable"` and
+`/api/contact` returned the generic safe message while the real
+`ECONNREFUSED` stayed server-side in the log only.
+
+**Security:** parameterized queries everywhere (`$1`/`$2` placeholders,
+verified by reading every query in the model/service files); no secrets
+in source; `.env` git-ignored on both frontend and backend, only
+`.env.example` (placeholders) committed; `NEXT_PUBLIC_API_URL` is the only
+frontend env var, carrying no secret.
+
+**CORS:** restricted to `FRONTEND_URL` (default `http://localhost:3000`),
+not `*`. Verified live: an `OPTIONS` preflight from the allowed origin got
+`Access-Control-Allow-Origin` back; the same preflight from an arbitrary
+origin did not.
+
+**Rate limiting:** `express-rate-limit` applied to all five lead-submission
+routes (not `/api/health`).
+
+**Duplicate detection:** email + short creation-time window, implemented
+in `leadService.ts` — a repeat submission from the same email within the
+window returns the original record's id and a "we already have a recent
+X" message rather than inserting a second row; a submission after the
+window is treated as a new, legitimate enquiry.
+
+**Frontend integration:**
+- `frontend/lib/api.ts` — the one shared client (`postJson`, `api.contact`,
+  `api.healthCheckup`, `api.leadMagnet`, `api.applications`); no component
+  calls `fetch(...)` directly.
+- `ContactForm.tsx`, `HealthCheckupForm.tsx`, `LeadMagnetForm.tsx` — Stage
+  7's simulated `window.setTimeout(() => setStatus("ready"))` replaced
+  with real `await api.X(payload)` calls. Server-returned `errors` are
+  merged into the same field-level error state Stage 7 already displayed;
+  the real server `message` is shown via `FormStatus`, which no longer
+  carries any Stage-7-specific "no backend yet" wording.
+- Careers: left untouched. The page already states "Application forms and
+  ATS integration will be added in a later stage" and links "Apply /
+  Inquire" to `/contact` — there is no form yet to connect, matching the
+  spec's own "only if the existing form is ready" condition. The backend
+  `/api/applications` route exists as prepared infrastructure.
+
+**Validation:** backend `tsc --noEmit` and `npm run build` both clean
+after the tsconfig/package.json fixes. Frontend `npm run lint`,
+`tsc --noEmit`, and `npm run build` all clean after wiring the three
+forms to the real API (still 36 routes; same one-time Google Fonts
+sandbox workaround as prior stages, reverted byte-for-byte immediately
+after).
+
+**API testing (live, not just source inspection):** `/api/health` with
+DB up and down; `/api/contact` valid, missing field, invalid email,
+invalid enum, oversized field; `/api/health-checkup` valid (full nested
+payload), invalid `businessStage` enum, empty `growthPriorities`;
+`/api/consultation`, `/api/lead-magnet`, `/api/applications` valid;
+duplicate-submission returning the same id; unknown route → 404;
+malformed JSON → safe generic error, no crash.
+
+**Database verification:** row counts and full column values confirmed
+via `psql` after each valid submission — e.g. the first contact
+submission's id in the API response matched the id and stored field
+values (`name`, `company`, `email`, `project_type`, `budget`, `timeline`,
+`message`) in `contact_leads` exactly.
+
+**End-to-end integration proof:** frontend and backend run together
+(frontend on its default port 3000, matching `FRONTEND_URL`); confirmed
+the compiled client JS bundle actually contains the literal string
+`localhost:5000` (from `NEXT_PUBLIC_API_URL`), not just that the source
+code references the env var; confirmed a same-origin POST against the
+live backend succeeds end-to-end.
+
+**Regression check:** homepage, `/services` (+ one detail page),
+`/portfolio` (+ the interactive `laxmi-astro-ai` case study), `/careers`,
+and all three lead-gen pages re-confirmed returning 200 with the backend
+and Postgres running.
+
+**Documentation:** created a project-root `README.md` (none existed
+before — only `frontend/README.md`'s default `create-next-app`
+boilerplate, left untouched) covering backend/frontend setup, full API
+reference, schema summary, security notes, and deployment prep for
+Render/Railway (backend) and Vercel (frontend). This section (37) added
+here without deleting Stage 1–7 history.
+
+**Remaining for later stages:** deployment itself (no hosting credentials
+exist in this repo, none added); an actual downloadable planning-guide
+file; a careers application form to connect `/api/applications` to;
+everything explicitly out of scope per the spec's Step 39 (auth, admin
+dashboard, CRM, email automation, analytics, payments, etc.).
+
+---
+
+# 38. MASTER RULE (REAFFIRMED)
+
+**Preserve what works. Improve what is weak. Build what is missing. Verify
+by running things, not by reading them and assuming.**
+
+This held for Stage 5 through Stage 8: in each case the existing
+architecture was inspected first; in Stage 8 specifically, "inspect
+first" also meant catching content that looked like existing architecture
+but wasn't, verifying it independently rather than trusting it on sight,
+and being transparent about the discrepancy rather than quietly building
+on it. Always inspect first. Always validate after changes — by actually
+running the code, hitting real endpoints, and checking real database
+rows. Always report actual results. Do not fabricate completion.
