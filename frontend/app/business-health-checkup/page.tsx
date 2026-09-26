@@ -1,3 +1,4 @@
+import { HealthCheckupForm } from "@/components/forms/HealthCheckupForm";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/ui/PageHero";
@@ -6,36 +7,36 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Business Health Checkup",
   description:
-    "Evaluate your digital presence, technology readiness, and growth opportunities with Riyadvi.",
+    "A short, structured checkup covering digital presence, technology readiness, and growth priorities.",
 };
 
 const focusAreas = [
   "Digital presence and website clarity",
   "Technology readiness and maintainability",
   "Customer journey and conversion paths",
-  "Content and brand consistency",
-  "Opportunities for product or experience upgrades",
+  "Growth priorities across web, app, and digital marketing",
+  "A clear next step based on what you share",
 ];
 
 export default function BusinessHealthCheckupPage() {
   return (
     <>
       <PageHero
-        eyebrow="Lead Magnet"
+        eyebrow="Business Health Checkup"
         title="Is Your Business Ready for Its Next Digital Growth Stage?"
-        description="Riyadvi helps businesses evaluate digital presence, technology readiness, and growth opportunities — so you can prioritize the next steps with clarity."
+        description="Answer a few short questions about your digital presence, technology, and priorities. It takes a few minutes and helps frame a useful first conversation."
         actions={
-          <Button href="/contact" variant="primary">
-            Book a Free Consultation
+          <Button href="/contact" variant="outline">
+            Prefer to talk first? Book a consultation
           </Button>
         }
       />
 
-      <section className="bg-background py-14 sm:py-16">
+      <section className="bg-background py-14 sm:py-16 lg:py-20">
         <Container>
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="border border-border bg-surface p-6 sm:p-8">
-              <h2 className="text-xl font-semibold text-white">What we review</h2>
+          <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+            <div className="border border-border bg-surface p-6 sm:p-8 lg:self-start">
+              <h2 className="text-xl font-semibold text-white">What this covers</h2>
               <ul className="mt-6 space-y-3">
                 {focusAreas.map((item) => (
                   <li
@@ -47,24 +48,13 @@ export default function BusinessHealthCheckupPage() {
                 ))}
               </ul>
               <p className="mt-8 text-sm leading-relaxed text-muted">
-                The multi-step checkup form and lead capture backend will be
-                implemented in a later stage. This page establishes the route and
-                positioning so CTAs across the site navigate correctly.
+                This checkup reflects what you share with us — it is not an
+                automated scoring engine. A member of the Riyadvi team
+                reviews responses before any follow-up.
               </p>
             </div>
-            <div className="border border-border-gold/30 bg-[#0a0a0a] p-6 sm:p-8">
-              <h2 className="text-xl font-semibold text-white">Get started</h2>
-              <p className="mt-4 text-sm leading-relaxed text-muted">
-                Prefer a conversation first? Book a free consultation and we will
-                help you decide whether a structured checkup is the right next
-                step.
-              </p>
-              <div className="mt-8">
-                <Button href="/contact" variant="primary" className="w-full sm:w-auto">
-                  Talk to Riyadvi
-                </Button>
-              </div>
-            </div>
+
+            <HealthCheckupForm />
           </div>
         </Container>
       </section>

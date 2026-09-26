@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { ContactForm } from "@/components/forms/ContactForm";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/ui/PageHero";
 import type { Metadata } from "next";
@@ -22,39 +22,7 @@ export default function ContactPage() {
       <section className="bg-background py-14 sm:py-16 lg:py-20">
         <Container>
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="border border-border bg-surface p-6 sm:p-8">
-              <h2 className="text-xl font-semibold text-white">
-                How to reach us
-              </h2>
-              <p className="mt-4 text-sm leading-relaxed text-muted">
-                Contact form submission and CRM integration will be connected in
-                a later stage. For now, use the pathways below to prepare a
-                strong project brief.
-              </p>
-              <ul className="mt-6 space-y-4 text-sm text-muted">
-                <li className="border-l border-border-gold/50 pl-4">
-                  Describe your business challenge and desired outcome.
-                </li>
-                <li className="border-l border-border-gold/50 pl-4">
-                  Note timelines, constraints, and any existing systems.
-                </li>
-                <li className="border-l border-border-gold/50 pl-4">
-                  Share links to current websites or product references if
-                  available.
-                </li>
-              </ul>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button href="/business-health-checkup" variant="primary">
-                  Start Business Health Checkup
-                </Button>
-                <Button
-                  href="/software-project-planning-guide"
-                  variant="outline"
-                >
-                  Project Planning Guide
-                </Button>
-              </div>
-            </div>
+            <ContactForm />
 
             <div className="border border-border-gold/30 bg-[#0a0a0a] p-6 sm:p-8">
               <h2 className="text-xl font-semibold text-white">
@@ -62,6 +30,8 @@ export default function ContactPage() {
               </h2>
               <ul className="mt-6 space-y-4">
                 {[
+                  { href: "/business-health-checkup", label: "Business Health Checkup" },
+                  { href: "/software-project-planning-guide", label: "Project Planning Guide" },
                   { href: "/services", label: "Explore services" },
                   { href: "/portfolio", label: "Browse portfolio" },
                   { href: "/careers", label: "View careers" },
@@ -70,7 +40,7 @@ export default function ContactPage() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className="text-sm font-semibold text-gold hover:text-[#e0bc4a]"
+                      className="text-sm font-semibold text-gold hover:text-[#e0bc4a] focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                     >
                       {item.label} →
                     </Link>

@@ -1,3 +1,4 @@
+import { LeadMagnetForm } from "@/components/forms/LeadMagnetForm";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/ui/PageHero";
@@ -40,41 +41,40 @@ export default function SoftwareProjectPlanningGuidePage() {
         title="Software Project Planning Guide"
         description="Use this guide to prepare a clear brief before you engage a software partner — including Riyadvi."
         actions={
-          <Button href="/contact" variant="primary">
-            Discuss Your Project
+          <Button href="/contact" variant="outline">
+            Discuss Your Project Instead
           </Button>
         }
       />
 
-      <section className="bg-background py-14 sm:py-16">
+      <section className="bg-background py-14 sm:py-16 lg:py-20">
         <Container>
-          <ol className="space-y-5">
-            {guideSections.map((section, index) => (
-              <li
-                key={section.title}
-                className="border border-border bg-surface p-6 sm:p-8"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold">
-                  Step {String(index + 1).padStart(2, "0")}
-                </p>
-                <h2 className="mt-3 text-xl font-semibold text-white">
-                  {section.title}
-                </h2>
-                <p className="mt-3 text-sm leading-relaxed text-muted">
-                  {section.body}
-                </p>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-10 max-w-3xl text-sm text-muted">
-            Downloadable PDF generation and lead-gated delivery will be added in
-            a later stage. This route is live so resource CTAs and footer links
-            navigate correctly today.
-          </p>
-          <div className="mt-8">
-            <Button href="/contact" variant="outline">
-              Get planning help from Riyadvi
-            </Button>
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            <div>
+              <h2 className="text-xl font-semibold text-white">
+                What the guide contains
+              </h2>
+              <ol className="mt-6 space-y-5">
+                {guideSections.map((section, index) => (
+                  <li
+                    key={section.title}
+                    className="border border-border bg-surface p-6 sm:p-8"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold">
+                      Step {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <h3 className="mt-3 text-lg font-semibold text-white">
+                      {section.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-muted">
+                      {section.body}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <LeadMagnetForm />
           </div>
         </Container>
       </section>

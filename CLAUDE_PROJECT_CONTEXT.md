@@ -1190,11 +1190,106 @@ byte-for-byte immediately after, confirmed via `diff`).
 
 ---
 
-# 34. MASTER RULE (REAFFIRMED)
+# 35. STAGE 7 — COMPLETION RECORD (Lead Generation & Conversion UX)
+
+**Status: COMPLETE AND VERIFIED.**
+
+Stage 7 replaced the placeholder messaging on `/contact`,
+`/business-health-checkup`, and `/software-project-planning-guide` with
+production-quality frontend lead-generation UX. No backend, API routes,
+or database were touched — this is frontend-only, staged for Stage 8.
+
+**Reusable form primitives created** (`components/forms/`):
+- `FormField.tsx` — labeled text/email/tel input, real `<label htmlFor>`,
+  `aria-invalid`/`aria-describedby`, exported `fieldClasses()` shared by
+  the other field components for consistent styling.
+- `TextareaField.tsx`, `SelectField.tsx` — same accessibility pattern for
+  textareas and selects (placeholder is a real disabled `<option>`, so a
+  select can't silently stay invalid).
+- `CheckboxField.tsx` — multi-select checkbox group using a real
+  `<fieldset>`/`<legend>` with per-option `<label>`/`<input>` pairs.
+- `FormStatus.tsx` — submitting/ready/error banner. **Never claims a
+  submission was received or saved** — the "ready" state says data is
+  "valid and ready for submission" and that backend delivery connects in
+  Stage 8, per the spec's explicit no-fake-backend-success rule.
+- `StepProgress.tsx` — "Step X of N" indicator with `role="progressbar"`
+  for the multi-step checkup.
+
+No generic `LeadForm`/`MultiStepForm` abstraction was built — only one
+form is genuinely multi-step, so a dedicated `HealthCheckupForm.tsx` was
+simpler and clearer than a generic engine for a single consumer.
+
+**Concrete forms created:**
+- `ContactForm.tsx` — Name, Company, Email, Phone, Service/Project Type
+  (options pulled live from `data/services.ts`, not duplicated), optional
+  Budget/Timeline, Message. Full client-side validation, duplicate-submit
+  prevention, "Submit Another Enquiry" reset after the ready state.
+- `HealthCheckupForm.tsx` — the 6-step Business Health Checkup (Business
+  Information → Business Stage → Digital Presence → Technology Readiness
+  → Growth Priorities → Goals & Next Steps). Per-step validation gates
+  "Next"; going back never clears entered values (single local
+  `useState` object, no global state). Growth Priorities uses
+  `CheckboxField`; every other question uses `SelectField` for
+  consistency. Explicitly tells the user this reflects "what you share"
+  rather than an automated scoring engine, per the spec's no-fake-scoring
+  rule.
+- `LeadMagnetForm.tsx` — Name, Company, Email, Phone for the planning
+  guide. Explicitly states no file exists yet and nothing was downloaded
+  — gated delivery connects in Stage 8. No fake PDF was invented.
+
+**Shared types/validation:**
+- `types/forms.ts` — `ContactPayload`, `HealthCheckupPayload`,
+  `LeadMagnetPayload` match the spec's Step 13 payload shapes exactly, so
+  Stage 8 can wire `POST /api/contact`, `/api/health-checkup`,
+  `/api/lead-magnet` directly against existing state without UI rework.
+  Option constants (`BUDGET_OPTIONS`, `TIMELINE_OPTIONS`,
+  `GROWTH_PRIORITY_OPTIONS`, `BUSINESS_STAGE_OPTIONS`, etc.) live here
+  too, alongside typed defaults for each payload.
+- `lib/validation.ts` — dependency-free validators (`validateRequiredText`,
+  `validateEmail`, `validatePhone`, `validateSelect`, `validateTextarea`,
+  `validateChecklist`, `hasErrors`). Explicit code comment: client-side
+  validation is UX only, not a security boundary — Stage 8 must
+  re-validate server-side.
+
+**Pages modified:** `app/contact/page.tsx`, `app/business-health-checkup/page.tsx`,
+`app/software-project-planning-guide/page.tsx` — placeholder copy
+replaced with the real forms; existing page structure (`PageHero`,
+`Container`, black/gold styling) reused, not rebuilt.
+
+**Validation:** `npm run lint` clean (after removing three unnecessary
+`eslint-disable-next-line no-console` comments the project's config
+didn't need). `npx tsc --noEmit` clean (one transient `LayoutProps`
+error again traced to a deleted `.next` folder, resolved by regenerating
+via the dev server, same as Stage 6). `npm run build` succeeded — still
+36 routes. Dev server exercised: all three lead-gen routes → 200;
+`/services/invalid-service` and `/portfolio/invalid-project` still 404;
+homepage/`/services`/`/portfolio` re-confirmed unaffected. Step-1-only
+server-render of the health checkup confirmed (steps 2–6 mount only
+after client-side "Next"); `role="progressbar"` and per-step `aria-label`
+regions confirmed present; `focus-visible`, `prefers-reduced-motion`,
+`accent-color` (checkbox accent), and the submitting spinner's
+`animate-spin` utility all confirmed present in the shipped CSS.
+Existing CTAs (Navbar, Footer, homepage `BusinessHealthCheckupCTA`,
+`PageCta` used across Services/Portfolio) re-confirmed still pointing at
+`/contact` and `/business-health-checkup` correctly.
+
+**Known note:** same Google Fonts sandbox limitation as Stages 5–6,
+handled the same way.
+
+**Remaining for Stage 8:** actual `POST` calls to `/api/contact`,
+`/api/health-checkup`, `/api/lead-magnet`; server-side validation;
+persisting leads; replacing each form's "ready" state with a real
+server response; producing (or sourcing) an actual downloadable file for
+the planning guide instead of the current honest "not available yet"
+state.
+
+---
+
+# 36. MASTER RULE (REAFFIRMED)
 
 **Preserve what works. Improve what is weak. Build what is missing.**
 
-This held for Stage 5 and Stage 6: in both cases the existing
+This held for Stage 5, Stage 6, and Stage 7: in each case the existing
 architecture was inspected first, found substantially complete, and
 extended rather than replaced. Always inspect first. Always validate
 after changes. Always report actual results. Do not fabricate
