@@ -580,6 +580,75 @@ separate decision to do so.
 
 ---
 
+## Testing (Phase 12) — production build fix + deployment preparation
+
+**The `next build` failure Phase 11 documented is now fixed.** Root
+cause: `frontend/app/layout.tsx` used `next/font/google`'s `Inter`, which
+makes `next build` require reaching `fonts.googleapis.com`. Replaced with
+`next/font/local`, sourcing the identical Inter typeface from
+`@fontsource-variable/inter` (npm, SIL Open Font License 1.1 — the same
+license Google Fonts distributes Inter under) as a single variable-weight
+`.woff2`. Same `--font-inter` CSS variable, same weight range (100–900),
+same `display: "swap"` — no visual or typography change, verified by
+diffing the rendered class names/variable wiring, not just by the build
+passing.
+
+Verified, from a clean install (`rm -rf node_modules .next && npm ci`):
+
+| Command | Result |
+|---|---|
+| `npm ci` | ✅ 436 packages, 0 vulnerabilities |
+| `npm run lint` | ✅ 0 errors |
+| `npm run typecheck` | ✅ 0 errors |
+| `npm run build` | ✅ **Passes** — 41 routes generated, "Compiled successfully" |
+
+And for the backend, also from a clean install
+(`rm -rf node_modules dist && npm ci`):
+
+| Command | Result |
+|---|---|
+| `npm ci` | ✅ 183 packages, 0 vulnerabilities |
+| `npm run typecheck` | ✅ 0 errors |
+| `npm run build` | ✅ `dist/` produced, 0 errors |
+
+**Honesty note:** backend's `npm run lint` is literally
+`tsc --noEmit -p tsconfig.json` — the same command as `typecheck`, not a
+real ESLint pass (there's no ESLint config for the backend). Stated
+plainly rather than installing ESLint just to make this line look better;
+unchanged from every prior phase.
+
+**Confirmed the fix actually works, not just that the build exits 0:**
+started `npm run start` against the production build and verified via
+`curl` that the page references a font served from Next's own
+`/_next/static/media/…woff2` path (self-hosted), that this file
+downloads successfully (200, 48,256 bytes, confirmed a genuine WOFF2 with
+`file`), and that the only remaining occurrence of the string
+`fonts.googleapis.com` anywhere in `.next`'s build output is this
+section's own explanatory code comment, embedded verbatim in a source
+map — not a live reference.
+
+**Frontend → backend wiring, proven locally (the closest verification
+possible without cloud credentials — see below):** rebuilt the frontend
+with `NEXT_PUBLIC_API_URL=http://localhost:5000` and confirmed via `grep`
+that this exact URL is baked into multiple `.next/static/chunks/*.js`
+files — the same mechanism a real Vercel build would use with the real
+backend's URL. Separately ran the production-built backend
+(`NODE_ENV=production`, `tsc` output, not `ts-node-dev`) against a real
+local PostgreSQL 16 instance and confirmed `GET /api/health` reports
+`"database":"connected"`.
+
+**Actual cloud deployment: NOT EXECUTED.** This environment has no
+Vercel/Render/Railway account, API token, or CLI session — only a small
+outbound-domain allowlist (npm, GitHub, PyPI) that doesn't include any
+hosting provider. Per this phase's own instruction, this is stated
+plainly rather than a URL being invented. See
+`PHASE_12_ASSIGNMENT_AUDIT.md` for the complete, itemized manual
+deployment steps (provision → migrate → deploy backend → deploy frontend
+→ set `FRONTEND_URL` → smoke test), each one reviewed against the actual
+code, not copied from a generic template.
+
+---
+
 ## AI Tools Used
 
 Documented honestly, based on the actual visible development history of

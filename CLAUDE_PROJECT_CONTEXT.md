@@ -1807,3 +1807,62 @@ viewport-emulation responsive test, any screen-reader test. Where the
 brief asked for something this environment cannot do, that limitation is
 named specifically (which tool is missing, what exactly wasn't checked)
 rather than the requirement being marked complete or silently dropped.
+
+---
+
+# 44. PHASE 12 — PRODUCTION BUILD STABILIZATION + DEPLOYMENT PREPARATION
+
+Phase 11 left one concrete, actionable recommendation on the table
+rather than acting on it: `next build` failing on `fonts.googleapis.com`
+network access, deliberately left unfixed at the time because switching
+font-loading strategy would have been an unrequested architecture change.
+Phase 12's brief explicitly asked for that fix, so it happened this
+phase, not before — the same discipline (don't change working
+architecture without being asked) applied in both directions.
+
+**The fix:** `next/font/google` → `next/font/local`, sourcing the
+identical Inter typeface from `@fontsource-variable/inter` (SIL OFL 1.1,
+same license family Google Fonts uses) as one variable-weight `.woff2`.
+Same CSS variable, same weight range, same `display: swap`. Verified with
+more than "the build didn't crash": started the production build, pulled
+the actual served font file over HTTP, confirmed via `file` it's a real
+WOFF2, and grepped the entire `.next` output for any remaining
+`fonts.googleapis.com` reference — found exactly one, which turned out to
+be this phase's own explanatory code comment sitting in a source map, not
+a live reference. That distinction (a string appearing vs. a real
+network dependency existing) is the kind of thing worth actually checking
+rather than assuming from a text match.
+
+**What this phase did not do, and said so plainly:** deploy anything.
+This environment has no Vercel/Render/Railway credentials or CLI access,
+and no network path to any hosting provider's API — confirmed, not
+assumed, from the same domain allowlist every prior phase has operated
+under. Every instruction in this phase's brief that depended on an actual
+deployed URL (production health check, production form testing, admin
+production testing, production Lighthouse, production responsive
+testing) is marked "Not Done — environment limitation" in
+`PHASE_12_ASSIGNMENT_AUDIT.md`, not quietly reinterpreted as "prepared
+therefore complete." The closest available substitute — running the
+actual production build artifacts (`next build` + `next start`, `tsc`
+output + `node dist/server.js`, `NODE_ENV=production`) against a real
+local PostgreSQL instance, and proving the exact `NEXT_PUBLIC_API_URL`
+build-time-baking mechanism a real Vercel deployment depends on — was
+performed and is reported as exactly that: a local proof of the
+mechanism, not a claim of production verification.
+
+---
+
+# 45. MASTER RULE (REAFFIRMED)
+
+**Preserve what works. Improve what is weak. Build what is missing. Verify
+by running things, not by reading them and assuming. When something is
+genuinely incomplete, say so — a documented gap is worth more than a
+false "complete." And when a later phase asks you to revisit a call you
+made deliberately in an earlier phase, revisit it on its actual merits
+instead of defending the earlier decision for its own sake.**
+
+Phase 12's font fix is exactly that last case: Phase 11 correctly
+declined to touch working font-loading architecture on its own
+initiative; Phase 12 was explicitly asked to fix the same thing, so it
+did, verified thoroughly, and did not simply repeat Phase 11's earlier
+reasoning as a reason not to act.
