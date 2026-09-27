@@ -1740,3 +1740,70 @@ shipped, a rendering bug in the generated PDF was caught by actually
 looking at a rendered image rather than assuming ReportLab output is
 correct, and the blog's missing search/filter functionality is reported
 plainly rather than omitted or implemented as a rushed afterthought.
+
+---
+
+# 43. PHASE 11 — PRODUCTION QA + PERFORMANCE + RESPONSIVE + DOCUMENTATION CONSISTENCY
+
+Phase 11 was explicitly *not* a feature phase — the brief was to make
+Phase 10 reliable, correctly documented, and deployment-ready without
+touching working functionality. Full detail (every command run, every
+result) is in `README.md`'s "Testing (Phase 11)" section and
+`PHASE_11_ASSIGNMENT_AUDIT.md`'s requirement table; this entry is the
+short version plus the two findings worth recording in project history.
+
+**The Phase 10 audit correction.** The paragraph immediately above this
+one (`# 42`, written at the end of Phase 10) states the blog's
+search/filter functionality was missing. It wasn't — direct inspection of
+`components/blog/BlogListing.tsx` this phase found genuine, working
+search (title/excerpt/tag matching), category filtering, and tag
+matching, all wired into `/blog` and confirmed via a live `next dev`
+request. This document does not edit `# 42`'s text, the same way
+`PHASE_10_ASSIGNMENT_AUDIT.md` wasn't rewritten to erase the mistake —
+both get a dated correction appended instead, because the point of this
+file is an honest history, not a retroactively-perfect one. Whether the
+Phase 10 session implemented this feature after writing that paragraph
+and simply never went back to correct it, or misjudged the code on first
+read, isn't knowable from the artifacts alone — recorded as what actually
+happened (the claim was wrong, the code was right), not speculated
+further.
+
+**A self-caught regression, recorded honestly.** While fixing a genuine
+accessibility gap (WebGL-drawn labels in `HeroScene`/`EcosystemScene`
+being invisible to screen readers — a real gap, confirmed by checking
+that the label text drei's `<Text>` renders never appears anywhere in the
+DOM), the first fix attempt put `aria-hidden` on the entire
+`EcosystemSceneLazy` wrapper. That wrapper conditionally renders
+`EcosystemScenePlaceholder` before the 3D bundle loads — and that
+placeholder already had its own correct, visible, non-hidden list of
+technology names. The first fix would have hidden that from screen
+readers too. Caught on review before finalizing, not after; corrected so
+`aria-hidden` only wraps the live `<EcosystemScene />` branch. Recorded
+here because a fix introducing a smaller version of the exact problem it
+was solving is exactly the kind of mistake this project's own master rule
+exists to catch — and catching your own mistake before shipping it is the
+standard, not an exception to report quietly.
+
+**`next build` vs `next dev`, precisely.** Both hit the same
+`fonts.googleapis.com` 403 in this sandbox. `next dev` logs a warning
+("Failed to download Inter from Google Fonts. Using a fallback font
+instead.") and keeps serving; `next build` treats the identical failure
+as fatal and aborts. This was confirmed by running both, not inferred
+from one. Deliberately not "fixed" by switching to a self-hosted font —
+that would be an architecture change to a working system to solve a
+sandbox-specific problem that Vercel (with normal internet access during
+builds) will not hit. Recorded as a real, actionable recommendation for
+if this project's build environment ever changes, not silently patched
+around.
+
+**What was and wasn't verified.** Actually run: backend typecheck+build,
+frontend lint+typecheck, every public and admin route via `next dev` +
+curl (all 200), every public form against real PostgreSQL (including
+duplicate-submit idempotency, confirmed via row count), full admin
+session/401 lifecycle, and direct source review of every GSAP/Lenis/
+Three.js cleanup path named in the brief. Not run, and not claimed:
+`next build`, any headless-browser test, any Lighthouse score, any real
+viewport-emulation responsive test, any screen-reader test. Where the
+brief asked for something this environment cannot do, that limitation is
+named specifically (which tool is missing, what exactly wasn't checked)
+rather than the requirement being marked complete or silently dropped.

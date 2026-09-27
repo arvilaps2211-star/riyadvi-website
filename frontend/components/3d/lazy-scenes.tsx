@@ -26,7 +26,10 @@ const EcosystemScene = dynamic(
 
 export function HeroSceneLazy() {
   return (
-    <div className="w-full max-w-lg justify-self-center lg:max-w-none lg:justify-self-end">
+    <div
+      aria-hidden
+      className="w-full max-w-lg justify-self-center lg:max-w-none lg:justify-self-end"
+    >
       <HeroScene />
     </div>
   );
@@ -37,7 +40,18 @@ export function EcosystemSceneLazy() {
 
   return (
     <div ref={ref} className="w-full">
-      {inView ? <EcosystemScene /> : <EcosystemScenePlaceholder />}
+      {inView ? (
+        // Only the live canvas is hidden from assistive tech — not this
+        // wrapper as a whole. EcosystemScenePlaceholder (rendered below,
+        // before intersection) already renders its own real, visible,
+        // non-hidden <ul> of technology names; hiding this whole wrapper
+        // would have wrongly hidden that too.
+        <div aria-hidden>
+          <EcosystemScene />
+        </div>
+      ) : (
+        <EcosystemScenePlaceholder />
+      )}
     </div>
   );
 }

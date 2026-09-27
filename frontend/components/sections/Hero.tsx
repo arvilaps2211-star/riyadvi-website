@@ -1,4 +1,5 @@
 import { HeroSceneLazy } from "@/components/3d/lazy-scenes";
+import { HERO_NODES } from "@/components/3d/scene-config";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 
@@ -51,6 +52,20 @@ export function Hero() {
             <HeroContent />
             <HeroActions />
           </div>
+          {/*
+            Same gap as TechnologyEcosystem.tsx: HERO_NODES ("Web", "Apps",
+            "AI", "Cloud", "Data", "Design", "3D", "Digital Growth") are
+            drawn as WebGL <Text> inside the canvas, which is invisible to
+            screen readers and isn't otherwise repeated as visible text
+            anywhere in the hero. This sr-only list is the accessible
+            equivalent, kept in sync with the same HERO_NODES data the
+            scene renders from.
+          */}
+          <ul className="sr-only">
+            {HERO_NODES.map((node) => (
+              <li key={node.id}>{node.label}</li>
+            ))}
+          </ul>
           <HeroSceneLazy />
         </div>
       </Container>

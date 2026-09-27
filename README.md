@@ -424,6 +424,132 @@ untouched).
 
 ---
 
+## Testing (Phase 11)
+
+Phase 11 re-ran everything above against the actual Phase 10 codebase
+(same sandbox limitations apply — real local PostgreSQL 16, no headless
+browser) and added the following, all genuinely executed:
+
+| Test | Result |
+|---|---|
+| Frontend `npm run lint` | ✅ Pass (0 errors) |
+| Frontend `npm run typecheck` (script added this phase) | ✅ Pass |
+| Backend `npm run typecheck` | ✅ Pass |
+| Backend `npm run build` | ✅ Pass |
+| Frontend `npm run build` (`next build`) | ❌ Fails — see precise finding below |
+| `next dev` serving every required public route (`/`, `/about`, `/services*`, `/portfolio*`, `/blog*`, `/careers*`, `/contact`, `/business-health-checkup`, `/software-project-planning-guide`, `/admin/login`) | ✅ All return HTTP 200 |
+| HTML output sanity-checked for real errors (not just Next's inert error-boundary scaffolding) | ✅ None found |
+| Blog listing search/category/tag filtering | ✅ Confirmed genuinely implemented and rendered (see Phase 10 audit correction) |
+| Planning Guide PDF | ✅ Confirmed a real, valid 14-page PDF (`file` + page-count check), not a placeholder |
+| Lead-magnet, consultation, career-application submission against real Postgres | ✅ All persist correctly |
+| Empty-submission / invalid-email validation | ✅ Field-level errors returned, no partial writes |
+| Duplicate-submit prevention | ✅ Confirmed idempotent — same email+resource returns the same row, HTTP 200 not 201, no duplicate DB row |
+| Admin dashboard/leads/applications reflect newly-submitted real data | ✅ Verified before/after |
+| Admin invalid-session / expired-token → 401 | ✅ Verified |
+| Admin logout → subsequent 401 | ✅ Verified |
+| Phase 9 fixes (`trust proxy`, frontend 401→login redirect, secure cookie config, rate limiting) | ✅ Confirmed still present and untouched |
+| GSAP (`ScrollReveal`) — `gsap.context()` scoping, `.revert()` cleanup, reduced-motion bail-out | ✅ Confirmed correct by code inspection |
+| Lenis (`SmoothScrollProvider`) — single driver via `gsap.ticker` (no second RAF loop), proper `lenis.destroy()` + ticker removal on unmount, never mounted on `/admin` | ✅ Confirmed correct by code inspection |
+| Three.js (`SceneCanvas`) — WebGL detection, error boundary with deferred fallback swap, intersection-based frameloop pausing, mobile DPR/antialiasing tuning | ✅ Confirmed correct by code inspection |
+| CSS reduced-motion (`prefers-reduced-motion: reduce`) | ✅ Confirmed disables the decorative orbit/service-visual keyframe animations |
+| Focus visibility | ✅ Confirmed correct modern pattern: `:focus { outline: none }` paired with `:focus-visible { outline: ... }` (not outline suppressed entirely) |
+| Form accessibility (labels, `aria-invalid`, `aria-describedby`) | ✅ Confirmed on every field type (`FormField`, `SelectField`, `TextareaField`, `CheckboxField`) and every form's status region |
+| Public page metadata coverage | ✅ Every public route has its own `metadata`/`generateMetadata` export |
+| Database schema — indexes, UUID PKs, timestamps | ✅ Reviewed; email/created_at/job_slug indexed appropriately; no foreign keys (correct — tables are independent lead types by design, not a gap) |
+
+### Precise `next build` finding (not just "network blocked")
+
+`next build` fails, but **`next dev` does not** — both hit the exact same
+`fonts.googleapis.com` block in this sandbox, but they handle it
+differently:
+
+```
+Received response with status 403 when requesting https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap
+Warning: next/font: warning:
+Failed to download Inter from Google Fonts. Using a fallback font instead.
+If you are offline or behind a proxy, self-host the font with next/font/local, or set HTTP_PROXY/HTTPS_PROXY so Next.js can reach fonts.googleapis.com.
+```
+— these are `next dev`'s actual, verbatim log lines (from `/tmp/nextdev.log`
+in this session); it substitutes a fallback and keeps serving. `next build`
+treats the identical 403 as fatal and aborts instead.
+
+This is pre-existing since Stage 1 (both phases use `next/font/google`),
+not a Phase 10/11 regression, and there's already a `system-ui` fallback
+in `globals.css`'s font stack, so the page would render correctly either
+way. **Deliberately not fixed by switching to a self-hosted font** — that
+would be an architecture change to a working system for a problem that
+almost certainly won't occur on Vercel (which has normal internet access
+during builds). Recorded here as a genuine, actionable recommendation
+rather than silently worked around: if `next build` ever needs to run in
+a network-restricted CI/build environment, self-hosting Inter (e.g. via
+`@fontsource/inter` + `next/font/local`) would remove this dependency
+entirely.
+
+### Accessibility gaps found and fixed this phase
+
+Both fixes are additive (new `sr-only` text + an `aria-hidden` attribute
+on an already-existing element) — no 3D scene, GSAP animation, or Lenis
+behavior was modified to make these:
+
+- **`HeroScene` and `EcosystemScene` orbit/node labels were invisible to
+  screen readers.** Both scenes draw their labels (`"Web"`, `"Apps"`,
+  `"AI"`, `"Cloud"`, …, and the full tech stack list) using drei's WebGL
+  `<Text>`, not real DOM text — a deliberate, well-reasoned choice
+  documented in `scene-primitives.tsx` (drei's `Html` portal crashes under
+  React 19 Strict Mode). The side effect — screen reader users got no
+  equivalent content at all — wasn't compensated for. Fixed by adding a
+  `sr-only` `<ul>` of the same label data next to each scene in
+  `Hero.tsx` and `TechnologyEcosystem.tsx`, and marking the canvas itself
+  `aria-hidden` (in `lazy-scenes.tsx`) since the sr-only list is now its
+  accessible substitute. **Caught and corrected a self-introduced
+  regression while fixing this:** an early version of the
+  `EcosystemSceneLazy` fix put `aria-hidden` on the whole lazy-loading
+  wrapper, which also hid `EcosystemScenePlaceholder`'s own,
+  already-correct, already-visible tech-name list (shown before the 3D
+  bundle loads). Corrected so `aria-hidden` only wraps the live
+  `<EcosystemScene />` branch. Verified via `next dev` that all label text
+  actually appears in the rendered HTML.
+- **No `noindex` on `/admin/*`.** An admin login page appearing in search
+  results is a real, common hygiene issue. Added
+  `frontend/app/admin/layout.tsx` (new file, wraps the whole `/admin` tree
+  without touching the redirect page, `/admin/login`, or the protected
+  route group individually) exporting
+  `metadata = { robots: { index: false, follow: false } }`. Verified via
+  `next dev` that `<meta name="robots" content="noindex, nofollow">`
+  actually renders on `/admin/login`.
+
+### Not verified / honest limitations (Phase 11)
+
+- No headless browser is available in this environment — nothing above
+  is "browser tested" in the sense of an actual rendered browser with
+  DevTools/accessibility-tree inspection. Verification was: (a) real HTTP
+  requests against a running `next dev` server, (b) direct inspection of
+  the server-rendered HTML/RSC payload for the specific attributes and
+  text this phase added or checked, and (c) source-code review for
+  patterns (cleanup, reduced-motion checks, ARIA attributes) that a
+  runtime tool would otherwise need to confirm. This is real
+  verification, but it is not equivalent to an actual browser or
+  screen-reader session, and is reported as such rather than rounded up.
+- No responsive-viewport testing was performed with real browser tooling
+  (375×812, 390×844, 768×1024, 1440×900) — there is no headless browser
+  with viewport emulation available here. The only responsive-relevant
+  finding is a defensive `overflow-x: hidden` on `html`/`body` in
+  `globals.css`, which is a safety net against a stray oversized element
+  causing horizontal scroll, not a guarantee that no layout looks wrong
+  at a given width. No responsive-layout issues were found or fixed this
+  phase because no tool capable of finding them (viewport emulation) was
+  available — this is different from "tested and found nothing," and is
+  reported as the former.
+- Lighthouse was not run — no Lighthouse/CLI tooling is available in this
+  environment. No Lighthouse score of any kind is claimed anywhere in
+  this document.
+- Contrast ratios were not measured with a tool; the dark/gold palette
+  (`#050505` background, `#D4AF37` gold, white body text) was visually
+  reviewed against WCAG-adjacent expectations from the design tokens, not
+  computed.
+
+---
+
 ## Deployment preparation
 
 **Backend (Render / Railway):**

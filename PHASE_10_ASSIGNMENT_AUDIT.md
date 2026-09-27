@@ -12,7 +12,7 @@ on the presence of files or packages alone.
 | ≥4 meaningful advanced 3D/animation technologies | Complete | Three.js, @react-three/fiber, @react-three/drei (pre-existing, unchanged) **+** GSAP/ScrollTrigger (`ScrollReveal.tsx`, used in `WhyRiyadvi`, `ServicesPreview`, `PortfolioPreview`, `FinalCTA`) **+** Lenis (`SmoothScrollProvider.tsx`, public-site only). Confirmed both GSAP and Lenis strings are present in the actual compiled client JS bundle, not just installed as packages | None found |
 | Services (dynamic, 6 services, detail pages) | Complete (Phase 5, unchanged) | `data/services.ts`, `app/services/[slug]/page.tsx` | None found |
 | Portfolio / case studies (dynamic, ≥1 interactive) | Complete (Phase 6, unchanged) | `data/portfolio.ts` (10 projects), `PortfolioOrbitShowcase.tsx` for `laxmi-astro-ai` | None found |
-| Blog | Partial | Listing + detail pages exist; related articles genuinely implemented via category/tag matching (`app/blog/[slug]/page.tsx`) | **No search, category filter, or tag filter UI on the listing page** — confirmed absent by inspection, not built this phase (would be a non-trivial new feature; flagged rather than added under time pressure) |
+| Blog | Complete | Listing (`components/blog/BlogListing.tsx`) + detail pages exist. Inspected `BlogListing.tsx` directly (not assumed from a prior report): it implements live client-side **search** (matches title, excerpt, and tags), **category filtering** (button group, "All" + one per distinct category), and **tag matching** (search input matches against `post.tags`), all wired into `app/blog/page.tsx` and confirmed rendered on the page. Related articles genuinely implemented via category/tag matching in `app/blog/[slug]/page.tsx` | None found — see correction note below |
 | Careers + application flow | Complete (this phase) | `ApplicationForm.tsx` on `/careers/[slug]`, posts to existing `POST /api/applications` via existing `lib/api.ts`; live-tested submission confirmed in PostgreSQL (`applications` table) and visible via `GET /api/admin/applications` | None found |
 | Contact / lead generation | Complete | `/contact` now has two tabs: "Project Enquiry" (`POST /api/contact`) and "Book a Consultation" (`POST /api/consultation`, new this phase); both live-tested end-to-end into PostgreSQL and visible in `/admin/leads` | None found |
 | Business Health Checkup | Complete (Phase 7–8, unchanged) | 6-step form, `POST /api/health-checkup` | None found |
@@ -31,6 +31,15 @@ on the presence of files or packages alone.
 Phase 10's explicitly assigned gaps (career application flow,
 consultation flow, real Planning Guide PDF, meaningful GSAP/ScrollTrigger/
 Lenis usage) are implemented and were verified by actually running the
-code — not merely by writing it. The blog's search/category/tag filtering
-gap was found during inspection and is reported here rather than silently
-left undocumented or implemented as a rushed addition.
+code — not merely by writing it.
+
+**Correction (made in Phase 11, dated below the original Phase 10
+report):** the Blog row above originally stated search, category
+filtering, and tag filtering were absent from the listing page. Phase 11
+re-inspected `components/blog/BlogListing.tsx` directly against the
+instruction not to trust a prior report blindly, and found all three
+already fully implemented and wired into `app/blog/page.tsx` — this was a
+documentation error in the Phase 10 audit, not a code gap. No blog code
+was changed to fix this; only this document was corrected to match the
+actual, already-working implementation. See `PHASE_11_ASSIGNMENT_AUDIT.md`
+for the corrected, re-verified status of every requirement.
