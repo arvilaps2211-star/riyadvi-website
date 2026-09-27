@@ -20,3 +20,23 @@ export const leadRateLimiter = rateLimit({
     );
   },
 });
+
+/**
+ * Admin login brute-force protection (Phase 9). Deliberately tighter than
+ * the public lead-submission limiter: an admin login is a much higher-value
+ * target than a contact form, so a much lower ceiling is appropriate. Keyed
+ * by IP, same as the lead limiter.
+ */
+export const adminLoginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 login attempts per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    sendError(
+      res,
+      "Too many login attempts. Please wait a few minutes and try again.",
+      429,
+    );
+  },
+});
