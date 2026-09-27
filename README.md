@@ -160,9 +160,8 @@ Returns API and database connectivity status.
 
 ### `POST /api/consultation`
 
-Same shape as `/api/contact` plus an optional `preferredTimeslot`. Prepared
-infrastructure — the current frontend does not yet submit to this endpoint
-separately from `/api/contact`.
+Same shape as `/api/contact` plus an optional `preferredTimeslot`.
+**Phase 10D:** now connected on the frontend — see below.
 
 ### `POST /api/health-checkup`
 
@@ -190,17 +189,27 @@ algorithmic assessment.
 { "name": "...", "company": "...", "email": "...", "phone": "...", "resource": "software-project-planning-guide" }
 ```
 
-No guide PDF exists in this repository yet. The response never fabricates
-a download link — `data.downloadUrl` is always `null` until an actual file
-is wired up.
+**Phase 10E:** the guide PDF now genuinely exists at
+`frontend/public/guides/software-project-planning-guide.pdf`, served by
+Next.js. On success, `data.downloadUrl` is the real relative path to that
+file (`/guides/software-project-planning-guide.pdf`) — never a fabricated
+link. If a future resource has no file yet, the same endpoint returns
+`downloadUrl: null` with honest copy rather than a broken link.
 
 ### `POST /api/applications`
 
-Prepared infrastructure for career applications. The careers page currently
-links "Apply / Inquire" to `/contact` and explicitly states application
-forms are a later stage — nothing on the frontend calls this endpoint yet.
-`resumeReference` is a free-text field (a link or note), not a file upload,
-since no file-storage system exists.
+**Phase 10B:** connected to a real form on each career detail page
+(`/careers/[slug]`, `ApplicationForm.tsx`) via the existing
+`frontend/lib/api.ts` client. `resumeReference` is a free-text field (a
+link or note), not a file upload, since no file-storage system exists.
+Submitted applications appear in `/admin/applications`.
+
+### `POST /api/consultation`
+
+**Phase 10D:** connected via a "Book a Consultation" tab on `/contact`
+(`ConsultationForm.tsx`), alongside the original "Project Enquiry" tab
+that still posts to `/api/contact`. Submitted consultations appear in
+`/admin/leads` with `type: "consultation"`.
 
 ---
 
@@ -444,6 +453,90 @@ exist in this repository, and none should be added without an explicit,
 separate decision to do so.
 
 ---
+
+## AI Tools Used
+
+Documented honestly, based on the actual visible development history of
+this repository — no tool is listed unless there is direct evidence of it
+being used.
+
+**Tool:** Claude (Anthropic), used as an agentic coding assistant across
+every phase of this project (Phase 1 through Phase 10), including at
+least two separate Claude sessions/accounts (the account that completed
+Phase 9's admin dashboard, and the account that completed Phase 10).
+
+**Purpose:** end-to-end implementation — inspecting the existing
+codebase before each phase, writing frontend (Next.js/React/TypeScript)
+and backend (Express/TypeScript/PostgreSQL) code, running real
+validation (`lint`, `tsc --noEmit`, `build`), starting the actual dev
+servers and PostgreSQL to exercise APIs and verify database rows, fixing
+bugs found during that verification, and writing/updating this
+documentation.
+
+**Example prompt (paraphrased from Phase 10):** "Implement Phase 10:
+close the remaining gaps against the assignment — meaningful GSAP/
+ScrollTrigger/Lenis animation, a real career application form wired to
+the existing `/api/applications`, a consultation booking flow, and an
+actual Software Project Planning Guide PDF. Preserve everything from
+Phase 1–9. Actually run lint/typecheck/build and test the APIs against
+real PostgreSQL before reporting anything as done."
+
+**Generated output:** the reusable form/animation components
+(`ContactForm`, `ConsultationForm`, `ApplicationForm`, `LeadMagnetForm`,
+`HealthCheckupForm`, `ScrollReveal`, `SmoothScrollProvider`), the Express
+routes/services/validators/models for every lead type, the admin
+authentication and dashboard, the PostgreSQL schema and migrations, the
+Software Project Planning Guide PDF (generated via a Python/ReportLab
+script, `Riyadvi-authored content, not copied from any source`), and this
+documentation.
+
+**Manual changes / human review:** every phase's output was reviewed
+against the actual repository state rather than accepted on description
+alone; issues found during that review were corrected before being
+reported as done — for example, a set of backend files that appeared in
+the working copy without a clear provenance were read in full and
+partially rebuilt (corrected `tsconfig.json`/dependency versions) before
+being trusted, and a white-on-white PDF title bug was caught by rendering
+the PDF to an image and visually inspecting it, not just generating it.
+
+**Why selected:** the project was already being developed with Claude
+across every prior phase; continuing with the same tool kept context,
+conventions, and code style consistent rather than introducing a second
+tool mid-project.
+
+No other AI tool (ChatGPT, Cursor, Windsurf, Lovable, or similar) has any
+evidence of use in this repository's actual files or history, so none are
+claimed here.
+
+---
+
+## Third-Party Assets
+
+- **Fonts:** Inter, via `next/font/google` (Google Fonts). No other
+  custom or licensed fonts are used.
+- **Icons:** [lucide-react](https://lucide.dev/) — open-source icon set,
+  used throughout the UI (service icons, admin sidebar, form affordances).
+- **3D/graphics libraries:** [Three.js](https://threejs.org/),
+  [@react-three/fiber](https://docs.pmnd.rs/react-three-fiber),
+  [@react-three/drei](https://github.com/pmndrs/drei) — used for the
+  homepage Hero and Technology Ecosystem scenes.
+- **Animation libraries:** [GSAP](https://gsap.com/) (including
+  ScrollTrigger) and [Lenis](https://github.com/darkroomengineering/lenis)
+  (`@studio-freight/lenis`) — used for scroll-reveal animation and smooth
+  scrolling on the public site.
+- **PDF generation:** [ReportLab](https://www.reportlab.com/) (Python) —
+  used only to generate the Software Project Planning Guide PDF at build
+  time; it is not a runtime dependency of either the frontend or backend.
+- **Images:** no third-party stock photography is used; all visual
+  treatments (service/portfolio visuals, the interactive case study) are
+  original inline SVG/CSS built for this project.
+- **Backend libraries:** Express, `pg`, Zod, `bcryptjs`, `jsonwebtoken`,
+  `cookie-parser`, `cors`, `express-rate-limit`, `dotenv` — all standard,
+  widely-used open-source packages; no vendored or copied third-party
+  source code.
+
+No ownership is claimed over any of the above — they are used under
+their respective open-source licenses.
 
 ## Project history
 

@@ -1,3 +1,4 @@
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 
@@ -50,7 +51,7 @@ export function WhyRiyadvi() {
         />
 
         <div className="mt-12 border-l border-border-gold/40 pl-6 sm:pl-8">
-          <ol className="space-y-8">
+          <ScrollReveal as="ol" staggerChildren className="space-y-8">
             {journeyPhases.map((phase) => (
               <li key={phase.title} className="relative">
                 <span
@@ -68,7 +69,7 @@ export function WhyRiyadvi() {
                 </p>
               </li>
             ))}
-          </ol>
+          </ScrollReveal>
         </div>
       </Container>
     </section>

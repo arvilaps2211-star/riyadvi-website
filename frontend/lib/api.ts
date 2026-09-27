@@ -73,6 +73,8 @@ export async function postJson<T>(
 
 export const api = {
   contact: (payload: unknown) => postJson<{ id: string }>("/api/contact", payload),
+  consultation: (payload: unknown) =>
+    postJson<{ id: string }>("/api/consultation", payload),
   healthCheckup: (payload: unknown) =>
     postJson<{ id: string }>("/api/health-checkup", payload),
   leadMagnet: (payload: unknown) =>

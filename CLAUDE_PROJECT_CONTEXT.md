@@ -1450,16 +1450,293 @@ dashboard, CRM, email automation, analytics, payments, etc.).
 
 ---
 
-# 38. MASTER RULE (REAFFIRMED)
+# 39. PHASE 9 — ADMIN DASHBOARD + LEAD MANAGEMENT
+
+Built on top of Stage 8 exactly as instructed: inspected the existing
+architecture first (backend routes/models/validators/middleware, frontend
+`lib/api.ts`, `app/layout.tsx`, `globals.css` design tokens), then added
+Phase 9 without rewriting anything that worked.
+
+**Database (additive migration, no data loss):**
+`backend/database/migrations/001_phase9_admin_dashboard.sql` — new
+`admin_users` table (bcrypt password_hash, never plaintext), and a
+`status` column (`new | contacted | in_progress | completed | archived`,
+enforced by a `CHECK` constraint) added via `ADD COLUMN IF NOT EXISTS` to
+`contact_leads`, `consultation_requests`, `health_checkups`,
+`lead_magnet_leads`, and `applications`. Every statement is idempotent;
+running it twice against a database that already has these changes is a
+no-op, not an error. Applied and verified against a real local PostgreSQL
+16 instance — existing Stage 8 rows kept their data and simply gained
+`status = 'new'` by default.
+
+**Backend additions (all new files, nothing in Stage 1–8's backend was
+rewritten — only `server.ts` and `rateLimiter.ts` gained new wiring):**
+- `src/models/adminUser.ts`, `src/models/leadAdmin.ts` (the normalized
+  cross-table lead view + dashboard stats), `src/models/applicationAdmin.ts`
+- `src/services/authService.ts` — bcrypt hashing, JWT sign/verify, and the
+  HttpOnly cookie config (SameSite=None+Secure in production for the
+  cross-origin frontend/backend deployment; SameSite=Lax locally)
+- `src/middleware/adminAuth.ts` (`requireAdminAuth`) and a second,
+  stricter rate limiter in `rateLimiter.ts` just for `/api/admin/auth/login`
+- `src/validators/adminValidators.ts` (Zod schemas — login, status enum,
+  list-query pagination/search/filter, UUID params)
+- `src/routes/admin/{auth,dashboard,leads,applications}.ts`, mounted in
+  `server.ts` under `/api/admin/*` with `requireAdminAuth` applied to every
+  route except login/logout
+- `scripts/createAdminUser.ts` — a CLI, not an HTTP endpoint, so "who can
+  create an admin" stays an ops decision made with direct server/DB access,
+  never reachable over the network. Never logs the password.
+
+**Frontend additions:**
+- `components/layout/SiteChrome.tsx` — a path-aware wrapper so `/admin/*`
+  skips the public Navbar/Footer without touching the marketing site's
+  layout logic (checked via `usePathname`, not a second root layout)
+- `components/admin/{AdminAuthGuard,AdminShell,StatusBadge,DataStates,
+  PaginationControls}.tsx`
+- `app/admin/page.tsx` (redirect), `app/admin/login/page.tsx`,
+  `app/admin/(protected)/layout.tsx` (auth guard + shell), and
+  `dashboard`, `leads`, `leads/[id]`, `applications`, `applications/[id]`
+  pages under that protected group
+- `lib/api.ts` extended with an `adminApi` client (credentialed fetch,
+  typed, distinguishes list vs. single-record responses at the type level)
+  — the existing `api` export for public forms is untouched
+
+**Why a route group, not a second root layout:** `/admin/*` needs a
+completely different chrome (sidebar/header, no 3D hero, no marketing
+Navbar/Footer) but Next.js always renders one root layout for every route.
+Duplicating `<html>/<body>` via a second root layout was more invasive than
+necessary; a client-side pathname check in `SiteChrome` achieves the same
+result with a two-line diff to the existing root layout.
+
+**Why the auth guard is client-side, not Next.js middleware:** the
+HttpOnly session cookie is set by the *backend's* origin (a separate
+deployable — Vercel frontend + Render/Railway backend in production), so
+it is never present on requests the browser sends to the *frontend's* own
+server for page HTML. A Next.js middleware.ts on the frontend literally
+cannot see it. Real enforcement is 100% server-side — every
+`/api/admin/*` call re-verifies the cookie via `requireAdminAuth`
+regardless of what the frontend thinks; `AdminAuthGuard` calling
+`GET /api/admin/auth/me` on mount is a UX layer (loading state → redirect
+on 401), not the security boundary.
+
+**Testing — actually run, against a real local PostgreSQL 16 instance and
+a real running Express server, via curl (see `README.md`'s Testing table
+for the full list):** invalid/valid login, cookie issuance, unauthenticated
+and post-logout 401s, `/me`, dashboard stats verified against real inserted
+rows (before: all zero; after: matched exactly), search/type/status filters
+and pagination all verified against real data, lead + application detail
+and status-update round-trips (including invalid-status rejection and
+confirming the update actually persisted via a follow-up filtered query),
+and two SQL-injection attempts (`search` query param, `status` PATCH body)
+that were neutralized by parameterization and Zod enum validation
+respectively — verified the target table still had all its rows afterward.
+Backend `tsc --noEmit` and `tsc` (build) both pass; frontend `eslint .` and
+`tsc --noEmit` both pass with zero errors.
+
+**Not verified, honestly:** `next build` could not complete in this
+sandbox — its only failure is `next/font/google` being unable to reach
+`fonts.googleapis.com` (this sandbox's network egress blocks that domain;
+it's blocked the same way for Stage 1–8's own use of the same font, so
+this is not a Phase 9 regression). No headless browser exists here, so no
+actual browser/hydration testing was performed — everything about runtime
+UI behavior (redirect timing, form interactions, responsive breakpoints)
+was written carefully but not visually confirmed. Both limitations are
+called out explicitly rather than glossed over.
+
+**A lint debugging note worth recording:** the frontend's ESLint config
+includes an experimental `react-hooks/set-state-in-effect` rule that flags
+*any* synchronous `setState` call reachable from inside a `useEffect`,
+including one nested inside an async function called by that effect,
+before the function's first `await` — this is exactly the "reset to
+loading before fetching" pattern every data-fetching page here needs. The
+fix that actually satisfies the rule (used in `AdminAuthGuard` and now
+everywhere else) is to only call `setState` *after* an `await` inside a
+function declared directly inside the effect body; a small number of
+narrowly-scoped `eslint-disable-next-line` comments remain, each with an
+explanatory comment, for the one `setState("loading")` per page that
+genuinely needs to run before the fetch (reacting to filter/page changes),
+because removing the loading indicator to satisfy an experimental rule
+would be worse than a well-documented, deliberate exception to it.
+
+**Explicitly not implemented, per spec:** email notifications, WhatsApp,
+CRM integration, Calendly, AI lead scoring, payments, a CMS, multi-admin
+enterprise roles, cloud file storage, marketing automation, analytics
+integrations.
+
+**Regression check:** diffed the full working tree against the original
+`riyadvi-stage8-complete.zip`. Result: only new files, plus six existing
+files touched (`backend/.env.example`, `backend/package.json`,
+`backend/src/middleware/rateLimiter.ts`, `backend/src/server.ts`,
+`frontend/app/layout.tsx`, `frontend/lib/api.ts`) — each edit additive
+(new env vars appended, new deps/scripts added, new routes wired in, new
+component swapped in for direct JSX with identical rendered output for
+non-admin routes, new API client functions added alongside the untouched
+existing ones). No Stage 1–8 component, page, model, route, or validator
+was rewritten, downgraded, or removed. `HeroScene`, `EcosystemScene`,
+`PortfolioOrbitShowcase`, `ServiceHeroVisual`, `ProcessTimeline`, Stage 7
+form validation, and the Stage 8 API client are all untouched. Re-ran the
+Stage 7 contact-form validation and the existing 404 handler against the
+live server after all Phase 9 changes — both behave identically to before.
+
+---
+
+# 40. MASTER RULE (REAFFIRMED)
 
 **Preserve what works. Improve what is weak. Build what is missing. Verify
 by running things, not by reading them and assuming.**
 
-This held for Stage 5 through Stage 8: in each case the existing
-architecture was inspected first; in Stage 8 specifically, "inspect
-first" also meant catching content that looked like existing architecture
-but wasn't, verifying it independently rather than trusting it on sight,
-and being transparent about the discrepancy rather than quietly building
-on it. Always inspect first. Always validate after changes — by actually
-running the code, hitting real endpoints, and checking real database
-rows. Always report actual results. Do not fabricate completion.
+This held for Phase 9 the same as every stage before it: PostgreSQL was
+actually installed and run in this environment rather than assumed
+available; every admin endpoint was hit with curl against real data,
+including two actual SQL-injection attempts, before being called done; the
+one genuinely unverifiable piece (`next build`, blocked by sandbox network
+egress to Google Fonts) is reported as exactly that — unverified, with the
+specific reason — rather than silently skipped or claimed to have passed.
+
+---
+
+# 41. PHASE 10 -- COMPLETION RECORD (Advanced Animation + Missing Functional Flows)
+
+**Status: COMPLETE, with two honestly-documented gaps (see below).**
+
+**Provenance note:** this phase began from an uploaded
+riyadvi-stage9-complete.zip, said to be produced by a separate Claude
+session/account. Before building anything, the admin auth service,
+middleware, migration, and admin-user creation script were read in full.
+Unlike the anomalous Stage 8 backend content (Section 37), this content
+was genuinely sound: bcrypt with 12 rounds, generic invalid-credentials
+messaging to prevent user enumeration, HttpOnly cookies, an idempotent
+migration, and real (installable) dependency versions. npm install,
+tsc --noEmit, and npm run build all passed cleanly on first try for
+both frontend and backend -- a meaningfully different, more trustworthy
+starting point than Stage 8's.
+
+**10A -- Advanced animation:** gsap and @studio-freight/lenis were
+already dependencies but genuinely unused in source (confirmed via
+grep before writing anything, exactly as the brief warned against
+counting installation as implementation). Added:
+- components/animations/ScrollReveal.tsx -- GSAP + ScrollTrigger
+  fade/lift reveal, supports an `as` prop (div/ol/ul) so it can wrap
+  semantic markup without degrading it (a real bug caught and fixed
+  during this phase: an early version silently replaced an <ol>
+  milestone list with a <div>). Skips all animation under
+  prefers-reduced-motion: reduce.
+- components/animations/SmoothScrollProvider.tsx -- Lenis, mounted only
+  in SiteChrome's public branch (never on /admin routes). A duplicate
+  render-loop bug (driving Lenis via both a manual requestAnimationFrame
+  loop and gsap.ticker simultaneously) was caught and fixed before this
+  was considered done.
+- Applied to WhyRiyadvi (staggered <ol>), ServicesPreview (staggered
+  <ul>), PortfolioPreview (staggered <ul>), FinalCTA (single fade-up).
+  The 3D Hero, EcosystemScene, PortfolioOrbitShowcase, and
+  ServiceHeroVisual were not touched.
+- Verified live: the compiled client JS bundle actually contains the
+  strings "gsap" and "lenis", confirming real usage, not just installed
+  packages.
+
+**10B -- Career application:** ApplicationForm.tsx created, using the
+exact existing field names from backend/src/validators/leadValidators.ts
+(jobSlug, jobTitle, resumeReference, coverMessage) and the existing
+lib/api.ts applications method (already present, not duplicated).
+Mounted on /careers/[slug], replacing the old "Apply / Inquire ->
+/contact" link. Live-tested: a real submission returned a real id, was
+confirmed present in the applications PostgreSQL table with matching
+field values, and was confirmed visible via GET /api/admin/applications.
+
+**10D -- Consultation flow:** rather than overload the working,
+previously-verified ContactForm, a sibling ConsultationForm.tsx was built
+(the field sets genuinely differ: preferredTimeslot vs budget, message
+optional vs required) and both are now presented as tabs on /contact via
+a new small client component, ContactTabs.tsx. Added a consultation
+method to lib/api.ts alongside the existing methods. Live-tested: a real
+submission was confirmed present in consultation_requests and visible via
+GET /api/admin/leads with type: "consultation".
+
+**10E -- Software Project Planning Guide:** the guide did not exist as a
+file (confirmed by inspection). Generated a real 14-page PDF
+(frontend/public/guides/software-project-planning-guide.pdf) covering the
+13 requested topics plus a checklist, using Riyadvi's black/gold identity
+-- via a Python/ReportLab script, not fabricated placeholder content. A
+real bug (white title text on a white page background, literally
+invisible) was caught by rendering the PDF to an image and inspecting it,
+not just by generating it and assuming it was correct.
+backend/src/routes/leadMagnet.ts now returns a genuine downloadUrl for
+this one known resource (/guides/...), and returns downloadUrl: null for
+anything else, preserving Stage 8's honesty rule for resources that still
+have no file.
+
+**10F -- Blog:** inspected app/blog/[slug]/page.tsx; related articles
+were already genuinely implemented via category/tag matching (not
+arbitrary). Gap found and left undocumented would have been dishonest, so
+it's recorded here instead: the blog listing page has no search, category
+filter, or tag filter UI at all. Building full filtering was judged out
+of proportion to add under this phase's time constraints without risking
+the quality of everything else, so it was not implemented -- see
+PHASE_10_ASSIGNMENT_AUDIT.md.
+
+**10G/H/I -- Responsive/accessibility/performance:** no new layout
+patterns were introduced beyond Stage 7/8's existing responsive field
+components. focus-visible and prefers-reduced-motion rules confirmed
+still present in the shipped CSS after all changes. Every new animation
+effect has explicit cleanup (gsap.context().revert(), gsap.ticker.remove(),
+lenis.destroy()) verified present in source. No new WebGL canvases were
+added. None of this was verified in an actual browser or with
+performance-measurement tooling -- both are unavailable in this
+environment; this is reported as a limitation, not silently assumed fine.
+
+**10J/10K -- Documentation:** added an honest "AI Tools Used" section to
+README.md -- only Claude is documented, since it is the only tool with
+direct evidence of use across this repository's actual history (including
+across at least two separate Claude sessions/accounts, per this phase's
+own provenance and the user's account of Phase 9). Added a "Third-Party
+Assets" section covering fonts, icons, 3D/animation libraries, and the
+PDF-generation tooling, with no ownership claimed over any of it.
+
+**10O -- Assignment audit:** PHASE_10_ASSIGNMENT_AUDIT.md created,
+comparing the actual implementation against the assignment
+requirement-by-requirement, with two items marked "Partial" rather than
+"Complete" specifically because gaps were found on inspection (blog
+filtering; responsive/accessibility/performance verified only via
+source/HTML inspection, not a real browser or device).
+
+**Validation actually performed:** npm install (frontend + backend), npm
+run lint (frontend -- clean), npx tsc --noEmit (frontend + backend --
+both clean), npm run build (frontend + backend -- both clean, 41 frontend
+routes generated including all Phase 9 admin routes). PostgreSQL 16
+started locally; Stage 8's tables confirmed still present with prior data
+intact; the Phase 9 migration applied cleanly (idempotent, no data loss);
+a real admin user created via the existing script. Live HTTP testing:
+/api/health, a real career-application submission, a real consultation
+submission, and a real lead-magnet submission (now returning a genuine
+downloadUrl) -- all three confirmed as real rows in PostgreSQL with
+matching field values, and the application/consultation confirmed visible
+through the real admin API after a real admin login. Combined
+frontend+backend smoke test: all public pages, the admin login page, the
+career application form's fields, the contact page's two tabs, and the
+planning-guide page all returned 200 with zero "Application error"/
+"Unhandled Runtime Error" markers in the rendered HTML.
+
+**Explicitly not performed, and not claimed:** no real browser or
+headless-browser session was used (HTML/HTTP inspection only, as in every
+prior phase in this history) -- console errors, hydration warnings, and
+true visual/responsive rendering were not observed directly. No
+Lighthouse or equivalent performance measurement was run. No production
+deployment was attempted.
+
+---
+
+# 42. MASTER RULE (REAFFIRMED)
+
+**Preserve what works. Improve what is weak. Build what is missing. Verify
+by running things, not by reading them and assuming. When something is
+genuinely incomplete, say so -- a documented gap is worth more than a
+false "complete."**
+
+This held for Phase 10 the same as every phase before it: the uploaded
+project's admin-auth code was read in full before being trusted, two real
+bugs (an accessibility regression in an early ScrollReveal draft, a
+duplicate Lenis/GSAP render loop) were caught and fixed rather than
+shipped, a rendering bug in the generated PDF was caught by actually
+looking at a rendered image rather than assuming ReportLab output is
+correct, and the blog's missing search/filter functionality is reported
+plainly rather than omitted or implemented as a rushed afterthought.

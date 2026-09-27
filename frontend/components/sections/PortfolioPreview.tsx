@@ -1,4 +1,5 @@
 import { featuredPortfolioProjects } from "@/data/portfolio";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -24,7 +25,7 @@ export function PortfolioPreview() {
           </Button>
         </div>
 
-        <ul className="mt-12 grid gap-5 lg:grid-cols-3">
+        <ScrollReveal as="ul" staggerChildren className="mt-12 grid gap-5 lg:grid-cols-3">
           {featuredPortfolioProjects.map((project) => (
             <li key={project.slug}>
               <article className="group flex h-full flex-col border border-border bg-[#0a0a0a] p-6 transition-colors duration-200 hover:border-border-gold">
@@ -55,7 +56,7 @@ export function PortfolioPreview() {
               </article>
             </li>
           ))}
-        </ul>
+        </ScrollReveal>
       </Container>
     </section>
   );

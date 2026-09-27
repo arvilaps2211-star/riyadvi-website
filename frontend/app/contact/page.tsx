@@ -1,4 +1,4 @@
-import { ContactForm } from "@/components/forms/ContactForm";
+import { ContactTabs } from "@/components/forms/ContactTabs";
 import { Container } from "@/components/ui/Container";
 import { PageHero } from "@/components/ui/PageHero";
 import type { Metadata } from "next";
@@ -22,7 +22,7 @@ export default function ContactPage() {
       <section className="bg-background py-14 sm:py-16 lg:py-20">
         <Container>
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-            <ContactForm />
+            <ContactTabs />
 
             <div className="border border-border-gold/30 bg-[#0a0a0a] p-6 sm:p-8">
               <h2 className="text-xl font-semibold text-white">

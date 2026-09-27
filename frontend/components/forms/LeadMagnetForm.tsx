@@ -22,6 +22,7 @@ export function LeadMagnetForm() {
   const [errors, setErrors] = useState<LeadMagnetErrors>({});
   const [status, setStatus] = useState<SubmissionStatus>("idle");
   const [serverMessage, setServerMessage] = useState<string | undefined>();
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
   function setField<K extends keyof LeadMagnetPayload>(key: K, value: LeadMagnetPayload[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -55,9 +56,11 @@ export function LeadMagnetForm() {
     const result = await api.leadMagnet(payload);
 
     if (result.success) {
-      // Honest per spec Step 22: only the server's own wording is shown —
-      // it explicitly does not claim a file was delivered when none exists.
+      // Phase 10E: the guide PDF now genuinely exists, so the backend can
+      // return a real downloadUrl. This still only ever reflects what the
+      // server actually returned — never a link constructed client-side.
       setServerMessage(result.message);
+      setDownloadUrl(result.data?.downloadUrl ?? null);
       setStatus("ready");
       return;
     }
@@ -73,6 +76,7 @@ export function LeadMagnetForm() {
     setValues(LEAD_MAGNET_DEFAULTS);
     setErrors({});
     setServerMessage(undefined);
+    setDownloadUrl(null);
     setStatus("idle");
   }
 
@@ -147,9 +151,16 @@ export function LeadMagnetForm() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button type="submit" variant="primary" disabled={isSubmitting || isReady} className="w-full sm:w-auto">
-          {isSubmitting ? "Submitting…" : "Request Access"}
-        </Button>
+        {!isReady ? (
+          <Button type="submit" variant="primary" disabled={isSubmitting} className="w-full sm:w-auto">
+            {isSubmitting ? "Submitting…" : "Request Access"}
+          </Button>
+        ) : null}
+        {isReady && downloadUrl ? (
+          <Button href={downloadUrl} variant="primary" className="w-full sm:w-auto">
+            Download the Guide
+          </Button>
+        ) : null}
         {isReady ? (
           <Button type="button" variant="outline" onClick={handleReset}>
             Request as Someone Else

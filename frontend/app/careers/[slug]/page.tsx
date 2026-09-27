@@ -1,7 +1,7 @@
 import { getJob, jobs } from "@/data/careers";
+import { ApplicationForm } from "@/components/forms/ApplicationForm";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { PageCta } from "@/components/ui/PageCta";
 import { PageHero } from "@/components/ui/PageHero";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -39,8 +39,8 @@ export default async function CareerDetailPage({ params }: CareerDetailProps) {
         description={job.description}
         actions={
           <>
-            <Button href="/contact" variant="primary">
-              Apply / Inquire
+            <Button href="#apply" variant="primary">
+              Apply Now
             </Button>
             <Button href="/careers" variant="outline">
               All Open Roles
@@ -114,12 +114,13 @@ export default async function CareerDetailPage({ params }: CareerDetailProps) {
         </Container>
       </section>
 
-      <PageCta
-        title={`Interested in ${job.title}?`}
-        description="Reach out via the contact page. Application forms and ATS integration will be added in a later stage."
-        href="/contact"
-        label="Apply / Inquire"
-      />
+      <section className="border-t border-border bg-surface py-14 sm:py-16 lg:py-20">
+        <Container>
+          <div className="mx-auto max-w-2xl">
+            <ApplicationForm job={job} />
+          </div>
+        </Container>
+      </section>
     </>
   );
 }

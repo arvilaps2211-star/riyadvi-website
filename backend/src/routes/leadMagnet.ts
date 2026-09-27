@@ -9,10 +9,18 @@ import type { NextFunction, Request, Response } from "express";
 const router = Router();
 
 /**
- * No guide PDF exists in this repository (Stage 8 Step 9). The lead is
- * still genuinely stored, but the response never claims a download is
- * available and never returns a fake URL.
+ * Phase 10E: the guide PDF now genuinely exists at
+ * frontend/public/guides/software-project-planning-guide.pdf, served by
+ * Next.js on the frontend's own origin. This route returns that real,
+ * relative path — never an absolute backend URL (the file isn't hosted
+ * here) and never a fabricated one. If a future resource genuinely has no
+ * file yet, this must go back to returning `downloadUrl: null` with honest
+ * copy, not a broken or fake link.
  */
+const KNOWN_RESOURCES: Record<string, string> = {
+  "software-project-planning-guide": "/guides/software-project-planning-guide.pdf",
+};
+
 router.post(
   "/",
   leadRateLimiter,
@@ -20,10 +28,15 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = await submitLeadMagnetLead(req.body);
+      const downloadUrl = KNOWN_RESOURCES[req.body.resource] ?? null;
+      const message = downloadUrl
+        ? "Your information has been received. You can download the guide below."
+        : "Your information has been received. Resource delivery will be enabled when the guide is available.";
+
       sendSuccess(
         res,
-        "Your information has been received. Resource delivery will be enabled when the guide is available.",
-        { id: result.record.id, downloadUrl: null },
+        message,
+        { id: result.record.id, downloadUrl },
         result.duplicate ? 200 : 201,
       );
     } catch (error) {

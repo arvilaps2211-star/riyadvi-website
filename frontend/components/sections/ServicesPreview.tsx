@@ -1,5 +1,6 @@
 import { services } from "@/data/services";
 import { serviceIcons } from "@/lib/service-icons";
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -26,7 +27,7 @@ export function ServicesPreview() {
           </Button>
         </div>
 
-        <ul className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <ScrollReveal as="ul" staggerChildren className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {services.map((service) => {
             const Icon = serviceIcons[service.iconId];
             return (
@@ -54,7 +55,7 @@ export function ServicesPreview() {
               </li>
             );
           })}
-        </ul>
+        </ScrollReveal>
       </Container>
     </section>
   );

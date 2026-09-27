@@ -1,3 +1,4 @@
+import { ScrollReveal } from "@/components/animations/ScrollReveal";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 
@@ -8,7 +9,7 @@ export function FinalCTA() {
       className="bg-background py-16 sm:py-20 lg:py-24"
     >
       <Container>
-        <div className="relative overflow-hidden border border-border bg-surface px-8 py-12 text-center sm:px-12 sm:py-14">
+        <ScrollReveal className="relative overflow-hidden border border-border bg-surface px-8 py-12 text-center sm:px-12 sm:py-14">
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.1),transparent_55%)]"
             aria-hidden
@@ -33,7 +34,7 @@ export function FinalCTA() {
               </Button>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
       </Container>
     </section>
   );

@@ -51,6 +51,39 @@ export const TIMELINE_OPTIONS = [
 ];
 
 // ---------------------------------------------------------------------------
+// Consultation booking (Phase 10D)
+// ---------------------------------------------------------------------------
+
+/** Field names match backend/src/validators/leadValidators.ts consultationSchema. */
+export type ConsultationPayload = {
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  projectType: string;
+  preferredTimeslot: string;
+  message: string;
+};
+
+export const CONSULTATION_PAYLOAD_DEFAULTS: ConsultationPayload = {
+  name: "",
+  company: "",
+  email: "",
+  phone: "",
+  projectType: "",
+  preferredTimeslot: "",
+  message: "",
+};
+
+export const PREFERRED_TIMESLOT_OPTIONS = [
+  "Weekday mornings",
+  "Weekday afternoons",
+  "Weekday evenings",
+  "Weekends",
+  "No preference",
+];
+
+// ---------------------------------------------------------------------------
 // Business Health Checkup (multi-step)
 // ---------------------------------------------------------------------------
 
@@ -165,3 +198,31 @@ export const LEAD_MAGNET_DEFAULTS: LeadMagnetPayload = {
   phone: "",
   resource: "software-project-planning-guide",
 };
+
+// ---------------------------------------------------------------------------
+// Career application (Phase 10B)
+// ---------------------------------------------------------------------------
+
+/** Field names match backend/src/validators/leadValidators.ts applicationSchema exactly. */
+export type ApplicationPayload = {
+  name: string;
+  email: string;
+  phone: string;
+  jobSlug: string;
+  jobTitle: string;
+  /** A link or short reference, not a file upload — no file-storage system exists yet. */
+  resumeReference: string;
+  coverMessage: string;
+};
+
+export function applicationDefaults(job: { slug: string; title: string }): ApplicationPayload {
+  return {
+    name: "",
+    email: "",
+    phone: "",
+    jobSlug: job.slug,
+    jobTitle: job.title,
+    resumeReference: "",
+    coverMessage: "",
+  };
+}
